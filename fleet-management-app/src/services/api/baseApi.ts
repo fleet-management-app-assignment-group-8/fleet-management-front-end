@@ -21,10 +21,10 @@ export interface ApiError {
 
 /**
  * Base API configuration
- * TODO: Update with actual backend URL when available
  */
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+  VEHICLE_SERVICE_URL: process.env.NEXT_PUBLIC_VEHICLE_SERVICE_URL || 'http://localhost:7001',
+  MAINTENANCE_SERVICE_URL: process.env.NEXT_PUBLIC_MAINTENANCE_SERVICE_URL || 'http://localhost:5001',
   TIMEOUT: 30000,
   HEADERS: {
     'Content-Type': 'application/json'
@@ -39,8 +39,8 @@ class BaseApi {
   private baseUrl: string;
   private defaultHeaders: Record<string, string>;
 
-  constructor(baseUrl: string = API_CONFIG.BASE_URL) {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl || API_CONFIG.VEHICLE_SERVICE_URL;
     this.defaultHeaders = API_CONFIG.HEADERS;
   }
 
@@ -182,5 +182,8 @@ class BaseApi {
   }
 }
 
+// Export configured API instances
 export const baseApi = new BaseApi();
+export const vehicleApi = new BaseApi(API_CONFIG.VEHICLE_SERVICE_URL);
+export const maintenanceApi = new BaseApi(API_CONFIG.MAINTENANCE_SERVICE_URL);
 

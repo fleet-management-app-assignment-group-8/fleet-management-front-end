@@ -8,24 +8,29 @@
  * - Utility functions for status handling
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
-import { Plus, MapPin, Fuel, Calendar } from 'lucide-react';
+import { Plus, MapPin, Fuel, Calendar, RefreshCw, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from './ui/alert';
 
 // Import types and utilities
 import type { Vehicle, VehicleFormState, VehicleStatus } from '@/types';
 import { useFormState, useDialogState, useDataFilter } from '@/hooks';
 import { StatusBadge, SearchFilter } from '@/components/shared';
 import { getVehicleStatusConfig, getFuelLevelColor } from '@/utils';
+import { vehicleService } from '@/services/api';
 
 export function VehicleManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Use custom hooks for dialog state management
   const addDialog = useDialogState();
@@ -43,96 +48,49 @@ export function VehicleManagement() {
   };
   const { formState: newVehicle, updateField, resetForm } = useFormState(initialFormState);
 
-  const [vehicles, setVehicles] = useState<Vehicle[]>([
-    {
-      id: 'VH-0123',
-      make: 'Ford',
-      model: 'Transit',
-      year: 2022,
-      license: 'ABC-1234',
-      status: 'active',
-      driver: 'John Smith',
-      location: 'Downtown Route',
-      fuelLevel: 78,
-      lastMaintenance: '2024-01-15',
-      nextMaintenance: '2024-03-15',
-      mileage: 45230,
-      color: 'White',
-      fuelType: 'Diesel'
-    },
-    {
-      id: 'VH-0456',
-      make: 'Mercedes',
-      model: 'Sprinter',
-      year: 2021,
-      license: 'DEF-5678',
-      status: 'maintenance',
-      driver: 'Unassigned',
-      location: 'Service Center',
-      fuelLevel: 45,
-      lastMaintenance: '2024-01-10',
-      nextMaintenance: '2024-02-28',
-      mileage: 67890,
-      color: 'Silver',
-      fuelType: 'Diesel'
-    },
-    {
-      id: 'VH-0789',
-      make: 'Volvo',
-      model: 'FH16',
-      year: 2023,
-      license: 'GHI-9012',
-      status: 'idle',
-      driver: 'Sarah Johnson',
-      location: 'Depot A',
-      fuelLevel: 92,
-      lastMaintenance: '2024-01-20',
-      nextMaintenance: '2024-04-20',
-      mileage: 23456,
-      color: 'Blue',
-      fuelType: 'Diesel'
-    },
-    {
-      id: 'VH-0321',
-      make: 'Isuzu',
-      model: 'NPR',
-      year: 2020,
-      license: 'JKL-3456',
-      status: 'active',
-      driver: 'Mike Wilson',
-      location: 'Highway 101',
-      fuelLevel: 34,
-      lastMaintenance: '2024-01-05',
-      nextMaintenance: '2024-02-25',
-      mileage: 89123,
-      color: 'Red',
-      fuelType: 'Gasoline'
+  // Fetch vehicles on mount and when filter changes
+  useEffect(() => {
+    fetchVehicles();
+  }, [statusFilter]);
+
+  const fetchVehicles = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await vehicleService.getAll(statusFilter !== 'all' ? statusFilter : undefined);
+      if (response.success && response.data) {
+        setVehicles(response.data);
+      } else {
+        setError(response.error || 'Failed to fetch vehicles');
+      }
+    } catch (err) {
+      setError('An error occurred while fetching vehicles');
+      console.error('Error fetching vehicles:', err);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
 
   // Performance optimization: Memoize callback to prevent unnecessary re-renders
-  const handleAddVehicle = useCallback(() => {
-    const vehicle: Vehicle = {
-      id: `VH-${String(vehicles.length + 1).padStart(4, '0')}`,
-      make: newVehicle.make,
-      model: newVehicle.model,
-      year: parseInt(newVehicle.year),
-      license: newVehicle.license,
-      status: 'idle' as VehicleStatus,
-      driver: 'Unassigned',
-      location: 'Depot',
-      fuelLevel: 100,
-      lastMaintenance: new Date().toISOString().split('T')[0],
-      nextMaintenance: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      mileage: parseInt(newVehicle.mileage),
-      color: newVehicle.color,
-      fuelType: newVehicle.fuelType,
-    };
-    
-    setVehicles([...vehicles, vehicle]);
-    addDialog.closeDialog();
-    resetForm();
-  }, [vehicles, newVehicle, addDialog, resetForm]);
+  const handleAddVehicle = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await vehicleService.create(newVehicle);
+      if (response.success) {
+        addDialog.closeDialog();
+        resetForm();
+        // Refresh the vehicle list
+        await fetchVehicles();
+      } else {
+        setError(response.error || 'Failed to create vehicle');
+      }
+    } catch (err) {
+      setError('An error occurred while creating the vehicle');
+      console.error('Error creating vehicle:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [newVehicle, addDialog, resetForm]);
 
   // Performance optimization: Memoize callback to prevent unnecessary re-renders
   const handleViewDetails = useCallback((vehicle: Vehicle) => {
@@ -154,11 +112,30 @@ export function VehicleManagement() {
           <h2 className="text-2xl font-semibold">Vehicle Management</h2>
           <p className="text-muted-foreground">Monitor and manage your fleet vehicles</p>
         </div>
-        <Button className="gap-2" onClick={() => addDialog.openDialog()}>
-          <Plus className="h-4 w-4" />
-          Add Vehicle
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="gap-2" 
+            onClick={fetchVehicles}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button className="gap-2" onClick={() => addDialog.openDialog()} disabled={isLoading}>
+            <Plus className="h-4 w-4" />
+            Add Vehicle
+          </Button>
+        </div>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Filters - Using reusable SearchFilter component */}
       <SearchFilter
@@ -182,8 +159,22 @@ export function VehicleManagement() {
       />
 
       {/* Vehicle Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredVehicles.map((vehicle) => (
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : filteredVehicles.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <p className="text-muted-foreground text-lg">No vehicles found</p>
+          <p className="text-muted-foreground text-sm mt-2">
+            {searchQuery || statusFilter !== 'all' 
+              ? 'Try adjusting your filters' 
+              : 'Add your first vehicle to get started'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredVehicles.map((vehicle) => (
           <Card key={vehicle.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -246,8 +237,9 @@ export function VehicleManagement() {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Vehicle Dialog */}
       <Dialog open={addDialog.isOpen} onOpenChange={addDialog.toggleDialog}>

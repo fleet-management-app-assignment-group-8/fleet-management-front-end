@@ -90,7 +90,7 @@ export interface Trip {
 }
 
 export type TripStatus = 'in_progress' | 'completed' | 'scheduled' | 'delayed';
-export type Priority = 'urgent' | 'high' | 'normal' | 'low';
+export type Priority = 'critical' | 'urgent' | 'high' | 'medium' | 'normal' | 'low';
 
 // ============================================================================
 // MAINTENANCE TYPES
@@ -98,15 +98,25 @@ export type Priority = 'urgent' | 'high' | 'normal' | 'low';
 
 export interface MaintenanceItem {
   id: string;
-  vehicle: string;
+  vehicle_id: string;
   type: string;
+  description?: string;
   status: MaintenanceStatus;
-  dueDate: string;
-  currentMileage: number;
-  dueMileage: number;
-  cost: number;
   priority: Priority;
-  assignedTo: string;
+  due_date: string;
+  scheduled_date?: string;
+  completed_date?: string;
+  current_mileage: number;
+  due_mileage: number;
+  estimated_cost?: number;
+  actual_cost?: number;
+  assigned_to?: string;
+  assigned_technician?: string;
+  notes?: string;
+  parts_needed?: any;
+  attachments?: any;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type MaintenanceStatus = 
@@ -114,7 +124,8 @@ export type MaintenanceStatus =
   | 'due_soon' 
   | 'scheduled' 
   | 'in_progress' 
-  | 'completed';
+  | 'completed'
+  | 'cancelled';
 
 // ============================================================================
 // FUEL TYPES
