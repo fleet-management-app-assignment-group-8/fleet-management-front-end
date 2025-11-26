@@ -144,7 +144,7 @@ export function DriverServiceConnectionTest() {
           <Alert variant="destructive">
             <XCircle className="h-4 w-4" />
             <AlertDescription>
-              Some endpoints failed. Make sure the Driver Service is running on port 6001.
+              Some endpoints failed. Make sure the Driver Service is running at {API_CONFIG.DRIVER_SERVICE_URL}.
             </AlertDescription>
           </Alert>
         )}
@@ -175,7 +175,7 @@ export function DriverServiceConnectionTest() {
         <div className="pt-4 border-t">
           <h4 className="font-semibold mb-2">Connection Instructions:</h4>
           <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-            <li>Ensure the Driver Service backend is running on port 6001</li>
+            <li>Ensure the Driver Service backend is running at {API_CONFIG.DRIVER_SERVICE_URL}</li>
             <li>Check that PostgreSQL database is accessible</li>
             <li>Verify CORS is enabled for the frontend origin</li>
             <li>Click "Run Tests" to verify all endpoints</li>

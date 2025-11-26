@@ -17,9 +17,10 @@ export function ConnectionTester() {
   const testMaintenanceService = async () => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_MAINTENANCE_API_URL || 'http://localhost:5001/api';
+      const serviceUrl = process.env.NEXT_PUBLIC_MAINTENANCE_SERVICE_URL || 'http://localhost:5001';
       
       // Test health endpoint
-      const healthResponse = await fetch('http://localhost:5001/health');
+      const healthResponse = await fetch(`${serviceUrl}/health`);
       if (!healthResponse.ok) {
         throw new Error('Health check failed');
       }

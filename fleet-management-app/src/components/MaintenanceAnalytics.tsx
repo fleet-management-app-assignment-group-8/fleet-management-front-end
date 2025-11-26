@@ -39,15 +39,14 @@ export function MaintenanceAnalytics() {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/maintenance/analytics/costs');
+      const response = await maintenanceService.getCostAnalysis();
       
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data);
+      if (response.success && response.data) {
+        setAnalytics(response.data);
       } else {
         toast({
           title: 'Error',
-          description: 'Failed to fetch analytics data',
+          description: response.error || 'Failed to fetch analytics data',
           variant: 'destructive',
         });
       }

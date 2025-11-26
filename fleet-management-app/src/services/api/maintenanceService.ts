@@ -489,11 +489,29 @@ class MaintenanceService {
     total_actual: number;
     variance: number;
     variance_percent: number;
-    by_vehicle: Record<string, { estimated: number; actual: number }>;
+    by_vehicle: Record<string, { estimated: number; actual: number; variance: number }>;
+    by_type: Record<string, { estimated: number; actual: number; count: number }>;
+    completed_count: number;
+    pending_count: number;
   }>> {
     try {
       const url = `${this.baseUrl}${this.endpoint}/analytics/costs`;
       const response = await fetch(url);
+      return this.handleResponse(response);
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  /**
+   * Get maintenance trends
+   */
+  async getTrends(period: string = 'month', limit: number = 6): Promise<ApiResponse<any>> {
+    try {
+      const url = new URL(`${this.baseUrl}${this.endpoint}/analytics/trends`);
+      url.searchParams.append('period', period);
+      url.searchParams.append('limit', limit.toString());
+      const response = await fetch(url.toString());
       return this.handleResponse(response);
     } catch (error) {
       return this.handleError(error);

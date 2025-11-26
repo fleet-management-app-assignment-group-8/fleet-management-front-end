@@ -41,12 +41,12 @@ export function MaintenanceReports() {
       const summaryResponse = await maintenanceService.getSummary();
       
       // Fetch cost analytics
-      const costResponse = await fetch('http://localhost:5001/api/maintenance/analytics/costs');
-      const costData = costResponse.ok ? await costResponse.json() : null;
+      const costResponse = await maintenanceService.getCostAnalysis();
+      const costData = costResponse.success ? costResponse.data : null;
 
       // Fetch trends
-      const trendsResponse = await fetch('http://localhost:5001/api/maintenance/analytics/trends?period=month&limit=6');
-      const trendsData = trendsResponse.ok ? await trendsResponse.json() : null;
+      const trendsResponse = await maintenanceService.getTrends('month', 6);
+      const trendsData = trendsResponse.success ? trendsResponse.data : null;
 
       setReportData({
         summary: summaryResponse.data,
