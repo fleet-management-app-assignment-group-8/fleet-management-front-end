@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { FileText, Download, Calendar, Filter, TrendingUp, Clock, DollarSign, Activity } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -19,6 +21,13 @@ import {
   TableRow,
 } from './ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { 
+  fuelConsumptionData, 
+  vehicleUtilizationData, 
+  maintenanceCostsData, 
+  performanceMetrics, 
+  topPerformingDrivers 
+} from './constants/mockData';
 
 export function Reports() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -78,7 +87,58 @@ export function Reports() {
   ];
 
   const generateReport = (reportId: string) => {
-    alert(`Generating ${reportTypes.find(r => r.id === reportId)?.name}...`);
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const reportConfig = reportTypes.find(r => r.id === reportId);
+    
+    if (!reportConfig) return;
+
+    const filename = `${reportConfig.id}_${timestamp}.csv`;
+    let headers: string[] = [];
+    let rows: (string | number)[][] = [];
+
+    switch (reportId) {
+      case 'fleet-performance':
+        headers = ['Metric', 'Value', 'Change', 'Trend'];
+        rows = performanceMetrics.map(m => [m.metric, m.value, m.change, m.trend]);
+        // Append utilization data section
+        rows.push([]);
+        rows.push(['Utilization Status', 'Count', 'Color']);
+        vehicleUtilizationData.forEach(d => rows.push([d.name, d.value, d.color]));
+        break;
+        
+      case 'maintenance-summary':
+        headers = ['Month', 'Scheduled Cost', 'Emergency Cost'];
+        rows = maintenanceCostsData.map(m => [m.month, m.scheduled, m.emergency]);
+        break;
+
+      case 'fuel-consumption':
+        headers = ['Month', 'Consumption (L)', 'Cost'];
+        rows = fuelConsumptionData.map(f => [f.month, f.consumption, f.cost]);
+        break;
+
+      case 'driver-performance':
+        headers = ['Driver Name', 'Safety Score', 'Trips'];
+        rows = topPerformingDrivers.map(d => [d.name, d.score, d.trips]);
+        break;
+    }
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const downloadReport = (reportName: string) => {
