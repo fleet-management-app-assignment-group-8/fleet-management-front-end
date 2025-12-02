@@ -197,10 +197,9 @@ export function ScheduleConflictChecker() {
                               <span>{formatDateTime(schedule.endTime)}</span>
                             </div>
 
-                            {schedule.vehicle && (
+                            {schedule.vehicleId && (
                               <div className="text-sm text-muted-foreground">
-                                Vehicle: {schedule.vehicle.make} {schedule.vehicle.model} 
-                                {schedule.vehicle.licensePlate && ` (${schedule.vehicle.licensePlate})`}
+                                Vehicle ID: {schedule.vehicleId}
                               </div>
                             )}
                           </div>

@@ -35,7 +35,7 @@ export function DriverScheduleManagement() {
     driverId: '',
     route: '',
     status: 'pending',
-    vehicle: undefined,
+    vehicleId: undefined,
     startTime: '',
     endTime: ''
   });
@@ -75,7 +75,7 @@ export function DriverScheduleManagement() {
           driverId: '',
           route: '',
           status: 'pending',
-          vehicle: undefined,
+          vehicleId: undefined,
           startTime: '',
           endTime: ''
         });
@@ -302,9 +302,7 @@ export function DriverScheduleManagement() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Truck className="h-4 w-4 text-muted-foreground" />
-                        {schedule.vehicle?.licensePlate || 
-                         `${schedule.vehicle?.make || ''} ${schedule.vehicle?.model || ''}`.trim() || 
-                         'N/A'}
+                        {schedule.vehicleId || 'N/A'}
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(schedule.status)}</TableCell>
@@ -366,6 +364,16 @@ export function DriverScheduleManagement() {
                 value={newSchedule.route}
                 onChange={(e) => setNewSchedule({ ...newSchedule, route: e.target.value })}
                 placeholder="Downtown to Airport"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="vehicleId">Vehicle ID (Optional)</Label>
+              <Input
+                id="vehicleId"
+                value={newSchedule.vehicleId || ''}
+                onChange={(e) => setNewSchedule({ ...newSchedule, vehicleId: e.target.value || undefined })}
+                placeholder="VH-001"
                 disabled={isSubmitting}
               />
             </div>
