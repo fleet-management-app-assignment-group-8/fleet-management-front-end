@@ -240,7 +240,7 @@ export function MaintenanceScheduler() {
         </CardHeader>
         <CardContent>
           {/* Week days header */}
-          <div className="grid grid-cols-7 gap-2 mb-2">
+          <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
               <div key={day} className="text-center text-sm font-semibold text-muted-foreground p-2">
                 {day}
@@ -249,7 +249,7 @@ export function MaintenanceScheduler() {
           </div>
 
           {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
             {days.map((day, index) => (
               <div
                 key={index}
