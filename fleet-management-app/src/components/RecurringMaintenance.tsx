@@ -320,7 +320,12 @@ export function RecurringMaintenance() {
                 <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetForm(); }}>
                     Cancel
                 </Button>
-                <Button onClick={handleAddSchedule}>Create Schedule</Button>
+                <Button 
+                  onClick={handleAddSchedule}
+                  disabled={!formData.name || !formData.vehicle_id || !formData.maintenance_type || !formData.frequency}
+                >
+                  Create Schedule
+                </Button>
                 </DialogFooter>
             </DialogContent>
             </Dialog>
@@ -491,7 +496,12 @@ export function RecurringMaintenance() {
             <Button variant="outline" onClick={() => { setSelectedSchedule(null); resetForm(); }}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateSchedule}>Update Schedule</Button>
+            <Button 
+              onClick={handleUpdateSchedule}
+              disabled={!formData.name || !formData.vehicle_id || !formData.maintenance_type || !formData.frequency}
+            >
+              Update Schedule
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

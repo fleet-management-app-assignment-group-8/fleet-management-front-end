@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { CheckCircle, XCircle, Loader2, Server, Terminal } from 'lucide-react';
+import { API_CONFIG } from '@/services/api/baseApi';
 
 type ServiceStatus = 'success' | 'error' | 'pending';
 type ServiceResult = { status: ServiceStatus; message: string };
@@ -23,8 +24,8 @@ export function DeveloperTesting() {
 
   const testMaintenanceService = async (): Promise<ServiceResult> => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_MAINTENANCE_API_URL || 'http://localhost:5001/api';
-      const serviceUrl = process.env.NEXT_PUBLIC_MAINTENANCE_SERVICE_URL || 'http://localhost:5001';
+      const serviceUrl = API_CONFIG.MAINTENANCE_SERVICE_URL;
+      const baseUrl = `${serviceUrl}/api`;
       
       // Test health endpoint
       const healthResponse = await fetch(`${serviceUrl}/health`);
@@ -54,10 +55,10 @@ export function DeveloperTesting() {
 
   const testDriverService = async (): Promise<ServiceResult> => {
     try {
-      const serviceUrl = process.env.NEXT_PUBLIC_DRIVER_SERVICE_URL || 'http://localhost:6001';
+      const serviceUrl = API_CONFIG.DRIVER_SERVICE_URL;
       
-      // Test Swagger/health endpoint (Spring Boot with SpringDoc)
-      const healthResponse = await fetch(`${serviceUrl}/actuator/health`).catch(() => 
+      // Test health endpoint
+      const healthResponse = await fetch(`${serviceUrl}/health`).catch(() => 
         fetch(`${serviceUrl}/`)
       );
       
@@ -65,14 +66,14 @@ export function DeveloperTesting() {
         throw new Error('Service not responding');
       }
 
-      // Test API endpoint - get drivers with pagination
-      const apiResponse = await fetch(`${serviceUrl}/api/drivers?page=0&size=1`);
+      // Test API endpoint - get drivers list
+      const apiResponse = await fetch(`${serviceUrl}/api/drivers/list`);
       if (!apiResponse.ok) {
         throw new Error(`API returned status ${apiResponse.status}`);
       }
 
       const data = await apiResponse.json();
-      const driverCount = data.totalElements || data.content?.length || 0;
+      const driverCount = Array.isArray(data) ? data.length : (data.totalElements || data.content?.length || 0);
       
       return {
         status: 'success',
@@ -88,7 +89,7 @@ export function DeveloperTesting() {
 
   const testVehicleService = async (): Promise<ServiceResult> => {
     try {
-      const serviceUrl = process.env.NEXT_PUBLIC_VEHICLE_SERVICE_URL || 'http://localhost:7001';
+      const serviceUrl = API_CONFIG.VEHICLE_SERVICE_URL;
       
       // Test health endpoint
       const healthResponse = await fetch(`${serviceUrl}/health`);
@@ -183,7 +184,7 @@ export function DeveloperTesting() {
                     <p className="font-medium">Maintenance Service</p>
                     <p className="text-sm text-muted-foreground">Python/Flask</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      http://localhost:5001/api/maintenance
+                      {API_CONFIG.MAINTENANCE_SERVICE_URL}/api/maintenance
                     </p>
                     <p className="text-xs mt-1 text-muted-foreground">
                       {results.maintenance.message}
@@ -201,7 +202,7 @@ export function DeveloperTesting() {
                     <p className="font-medium">Driver Service</p>
                     <p className="text-sm text-muted-foreground">Java/Spring Boot</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      http://localhost:6001/api/drivers
+                      {API_CONFIG.DRIVER_SERVICE_URL}/api/drivers
                     </p>
                     <p className="text-xs mt-1 text-muted-foreground">
                       {results.driver.message}
@@ -219,7 +220,7 @@ export function DeveloperTesting() {
                     <p className="font-medium">Vehicle Service</p>
                     <p className="text-sm text-muted-foreground">C#/.NET</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      http://localhost:7001/api/vehicles
+                      {API_CONFIG.VEHICLE_SERVICE_URL}/api/vehicles
                     </p>
                     <p className="text-xs mt-1 text-muted-foreground">
                       {results.vehicle.message}
@@ -284,11 +285,11 @@ export function DeveloperTesting() {
                       cd fleet-management-backend/src/maintenanceService && ./setup-and-run.sh
                     </code>
                     <div className="mt-2 flex gap-2 text-xs">
-                      <a href="http://localhost:5001/docs" target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
+                      <a href={`${API_CONFIG.MAINTENANCE_SERVICE_URL}/docs`} target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
                         📄 Swagger Docs
                       </a>
                       <span className="text-blue-300">|</span>
-                      <a href="http://localhost:5001/health" target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
+                      <a href={`${API_CONFIG.MAINTENANCE_SERVICE_URL}/health`} target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
                         💚 Health Check
                       </a>
                     </div>
@@ -303,7 +304,7 @@ export function DeveloperTesting() {
                       cd fleet-management-backend/src/driverService && ./setup-and-run.sh
                     </code>
                     <div className="mt-2 flex gap-2 text-xs">
-                      <a href="http://localhost:6001/" target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
+                      <a href={`${API_CONFIG.DRIVER_SERVICE_URL}/`} target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
                         📄 Swagger Docs
                       </a>
                     </div>
@@ -318,11 +319,11 @@ export function DeveloperTesting() {
                       cd fleet-management-backend/src/vehicleService && ./setup-and-run.sh
                     </code>
                     <div className="mt-2 flex gap-2 text-xs">
-                      <a href="http://localhost:7001/swagger" target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
+                      <a href={`${API_CONFIG.VEHICLE_SERVICE_URL}/swagger`} target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
                         📄 Swagger Docs
                       </a>
                       <span className="text-blue-300">|</span>
-                      <a href="http://localhost:7001/health" target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
+                      <a href={`${API_CONFIG.VEHICLE_SERVICE_URL}/health`} target="_blank" rel="noopener" className="text-blue-600 hover:underline flex items-center gap-1">
                         💚 Health Check
                       </a>
                     </div>

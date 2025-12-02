@@ -346,7 +346,12 @@ export function MaintenanceManagement() {
                 <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetForm(); }}>
                   Cancel
                 </Button>
-                <Button onClick={handleCreate}>Create</Button>
+                <Button 
+                  onClick={handleCreate}
+                  disabled={!formData.id || !formData.vehicle_id || !formData.type || !formData.due_date || loading}
+                >
+                  Create
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -570,7 +575,12 @@ export function MaintenanceManagement() {
             <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setSelectedItem(null); resetForm(); }}>
               Cancel
             </Button>
-            <Button onClick={handleUpdate}>Update</Button>
+            <Button 
+              onClick={handleUpdate}
+              disabled={!formData.id || !formData.vehicle_id || !formData.type || !formData.due_date || loading}
+            >
+              Update
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

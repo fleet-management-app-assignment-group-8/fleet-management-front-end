@@ -292,7 +292,12 @@ export function PartsInventory() {
                 <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetForm(); }}>
                     Cancel
                 </Button>
-                <Button onClick={handleAddPart}>Add Part</Button>
+                <Button 
+                  onClick={handleAddPart}
+                  disabled={!formData.name || !formData.part_number || !formData.category}
+                >
+                  Add Part
+                </Button>
                 </DialogFooter>
             </DialogContent>
             </Dialog>
@@ -501,7 +506,12 @@ export function PartsInventory() {
             <Button variant="outline" onClick={() => { setSelectedPart(null); resetForm(); }}>
               Cancel
             </Button>
-            <Button onClick={handleUpdatePart}>Update Part</Button>
+            <Button 
+              onClick={handleUpdatePart}
+              disabled={!formData.name || !formData.part_number || !formData.category}
+            >
+              Update Part
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

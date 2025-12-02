@@ -48,6 +48,19 @@ export function VehicleManagement() {
   };
   const { formState: newVehicle, updateField, resetForm } = useFormState(initialFormState);
 
+  // Check if all required fields are filled
+  const isFormValid = useMemo(() => {
+    return Boolean(
+      newVehicle.make &&
+      newVehicle.model &&
+      newVehicle.year &&
+      newVehicle.license &&
+      newVehicle.color &&
+      newVehicle.fuelType &&
+      newVehicle.mileage
+    );
+  }, [newVehicle]);
+
   // Fetch vehicles on mount and when filter changes
   useEffect(() => {
     fetchVehicles();
@@ -331,9 +344,16 @@ export function VehicleManagement() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={addDialog.closeDialog}>Cancel</Button>
-            <Button onClick={handleAddVehicle}>Add Vehicle</Button>
+          <DialogFooter className="sm:justify-between">
+            <div className="flex items-center">
+              {!isFormValid && (
+                <span className="text-sm text-muted-foreground">Please fill all fields</span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={addDialog.closeDialog}>Cancel</Button>
+              <Button onClick={handleAddVehicle} disabled={!isFormValid || isLoading}>Add Vehicle</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

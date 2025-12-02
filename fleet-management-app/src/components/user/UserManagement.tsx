@@ -185,7 +185,7 @@ export function UserManagement() {
           <p className="text-muted-foreground">Manage system users, roles, and permissions</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/developer-testing">
+          <Link href="/settings">
             <Button variant="outline">
               <Terminal className="h-4 w-4 mr-2" />
               Developer Testing
@@ -273,7 +273,12 @@ export function UserManagement() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddUserOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddUser}>Create User</Button>
+              <Button 
+                onClick={handleAddUser}
+                disabled={!newUser.name || !newUser.email || !newUser.department || !newUser.role}
+              >
+                Create User
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

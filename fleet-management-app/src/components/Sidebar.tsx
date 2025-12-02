@@ -13,8 +13,7 @@ import {
   BarChart3,
   Settings,
   FileText,
-  UserCog,
-  Terminal
+  UserCog
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -34,7 +33,6 @@ const navigationItems = [
   { id: 'fuel', label: 'Fuel Management', icon: Fuel, href: '/fuel' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/analytics' },
   { id: 'reports', label: 'Reports', icon: FileText, href: '/reports' },
-  { id: 'developer-testing', label: 'Dev Testing', icon: Terminal, href: '/developer-testing' },
 ];
 
 const adminOnlyItems = [

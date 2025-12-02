@@ -293,7 +293,12 @@ export function TechnicianManagement() {
                 <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetForm(); }}>
                     Cancel
                 </Button>
-                <Button onClick={handleAddTechnician}>Add Technician</Button>
+                <Button 
+                  onClick={handleAddTechnician}
+                  disabled={!formData.name || !formData.email || !formData.phone || !formData.hourly_rate}
+                >
+                  Add Technician
+                </Button>
                 </DialogFooter>
             </DialogContent>
             </Dialog>
@@ -459,7 +464,12 @@ export function TechnicianManagement() {
             <Button variant="outline" onClick={() => { setSelectedTech(null); resetForm(); }}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateTechnician}>Update</Button>
+            <Button 
+              onClick={handleUpdateTechnician}
+              disabled={!formData.name || !formData.email || !formData.phone || !formData.hourly_rate}
+            >
+              Update
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
