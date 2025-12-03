@@ -181,8 +181,7 @@ export function MaintenanceDashboard() {
                 </div>
               </div>
               <Button 
-                variant="outline" 
-                className="border-red-300 hover:bg-red-100"
+                className="bg-red-600 text-white hover:bg-red-700 cursor-pointer z-10 relative shadow-sm transition-colors"
                 onClick={() => router.push('/maintenance/manage')}
               >
                 View Items
@@ -223,32 +222,6 @@ export function MaintenanceDashboard() {
         })}
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => router.push('/maintenance/manage')}>
-              <Wrench className="mr-2 h-4 w-4" />
-              Schedule Maintenance
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/maintenance/scheduler')}>
-              <Calendar className="mr-2 h-4 w-4" />
-              View Calendar
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/maintenance/parts')}>
-              <Package className="mr-2 h-4 w-4" />
-              Check Inventory
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/maintenance/reports')}>
-              <FileText className="mr-2 h-4 w-4" />
-              Generate Report
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Status Overview */}
       {summary && summary.by_status && (
