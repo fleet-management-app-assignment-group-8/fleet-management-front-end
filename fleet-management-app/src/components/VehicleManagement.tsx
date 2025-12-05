@@ -247,11 +247,11 @@ export function VehicleManagement() {
           <Card key={vehicle.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{vehicle.id}</CardTitle>
+                <CardTitle className="text-lg">{vehicle.year} {vehicle.make} {vehicle.model}</CardTitle>
                 <StatusBadge config={getVehicleStatusConfig(vehicle.status as VehicleStatus)} />
               </div>
               <p className="text-sm text-muted-foreground">
-                {vehicle.year} {vehicle.make} {vehicle.model}
+                ID: {vehicle.id}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
