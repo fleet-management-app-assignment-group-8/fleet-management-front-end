@@ -137,6 +137,12 @@ export type Priority = 'critical' | 'urgent' | 'high' | 'medium' | 'normal' | 'l
 // MAINTENANCE TYPES
 // ============================================================================
 
+export interface MaintenancePart {
+  part_id: string;
+  name: string;
+  quantity: number;
+}
+
 export interface MaintenanceItem {
   id: string;
   vehicle_id: string;
@@ -154,8 +160,8 @@ export interface MaintenanceItem {
   assigned_to?: string;
   assigned_technician?: string;
   notes?: string;
-  parts_needed?: any;
-  attachments?: any;
+  parts_needed?: MaintenancePart[];
+  attachments?: string[];
   created_at?: string;
   updated_at?: string;
 }

@@ -40,7 +40,7 @@ import {
   X
 } from 'lucide-react';
 import { maintenanceService } from '@/services/api';
-import type { MaintenanceItem, MaintenanceStatus, Priority } from '@/types';
+import type { MaintenanceItem, MaintenanceStatus, Priority, MaintenancePart } from '@/types';
 import type { MaintenanceCreateData, MaintenanceUpdateData } from '@/services/api/maintenanceService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -72,6 +72,7 @@ export function MaintenanceManagement() {
     assigned_to: '',
     assigned_technician: '',
     notes: '',
+    parts_needed: [],
   });
 
   // Fetch maintenance items
@@ -178,6 +179,7 @@ export function MaintenanceManagement() {
         assigned_to: formData.assigned_to,
         assigned_technician: formData.assigned_technician,
         notes: formData.notes,
+        parts_needed: formData.parts_needed,
       };
 
       const response = await maintenanceService.update(selectedItem.id, updateData);
@@ -253,6 +255,7 @@ export function MaintenanceManagement() {
       assigned_to: '',
       assigned_technician: '',
       notes: '',
+      parts_needed: [],
     });
   };
 
@@ -272,6 +275,7 @@ export function MaintenanceManagement() {
       assigned_to: item.assigned_to || '',
       assigned_technician: item.assigned_technician || '',
       notes: item.notes || '',
+      parts_needed: item.parts_needed || [],
     });
     setIsEditDialogOpen(true);
   };
@@ -524,6 +528,20 @@ export function MaintenanceManagement() {
                   />
                 </div>
 
+                {item.parts_needed && item.parts_needed.length > 0 && (
+                  <div className="pt-2 border-t">
+                    <span className="text-sm text-muted-foreground block mb-2">Parts Needed:</span>
+                    <div className="grid gap-2">
+                      {item.parts_needed.map((part, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-muted/50 p-2 rounded text-sm">
+                          <span>{part.name}</span>
+                          <Badge variant="secondary">Qty: {part.quantity}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {item.notes && (
                   <div className="pt-2 border-t">
                     <span className="text-sm text-muted-foreground">Notes:</span>
@@ -598,6 +616,26 @@ function MaintenanceForm({
   setFormData: React.Dispatch<React.SetStateAction<Partial<MaintenanceCreateData>>>; 
   isEdit?: boolean;
 }) {
+  const addPart = () => {
+    const newPart: MaintenancePart = { part_id: `NEW-${Date.now()}`, name: '', quantity: 1 };
+    setFormData({
+      ...formData,
+      parts_needed: [...(formData.parts_needed || []), newPart]
+    });
+  };
+
+  const removePart = (index: number) => {
+    const newParts = [...(formData.parts_needed || [])];
+    newParts.splice(index, 1);
+    setFormData({ ...formData, parts_needed: newParts });
+  };
+
+  const updatePart = (index: number, field: keyof MaintenancePart, value: any) => {
+    const newParts = [...(formData.parts_needed || [])];
+    newParts[index] = { ...newParts[index], [field]: value };
+    setFormData({ ...formData, parts_needed: newParts });
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-2 gap-4">
@@ -736,6 +774,56 @@ function MaintenanceForm({
             onChange={(e) => setFormData({ ...formData, assigned_technician: e.target.value })}
             placeholder="John Doe"
           />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Parts Needed</Label>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm"
+            onClick={addPart}
+          >
+            <Plus className="h-4 w-4 mr-1" /> Add Part
+          </Button>
+        </div>
+        
+        <div className="space-y-2 border rounded-md p-4 bg-muted/10">
+          {formData.parts_needed?.map((part, index) => (
+            <div key={index} className="flex gap-2 items-end">
+              <div className="flex-1">
+                <Label className="text-xs mb-1 block">Part Name</Label>
+                <Input 
+                  value={part.name} 
+                  onChange={(e) => updatePart(index, 'name', e.target.value)}
+                  placeholder="Part Name"
+                />
+              </div>
+              <div className="w-24">
+                <Label className="text-xs mb-1 block">Quantity</Label>
+                <Input 
+                  type="number" 
+                  value={part.quantity} 
+                  onChange={(e) => updatePart(index, 'quantity', parseInt(e.target.value) || 1)}
+                  min={1}
+                />
+              </div>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="icon"
+                className="h-10 w-10 mb-[2px]"
+                onClick={() => removePart(index)}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+          {(!formData.parts_needed || formData.parts_needed.length === 0) && (
+            <p className="text-sm text-muted-foreground italic text-center py-2">No parts added yet.</p>
+          )}
         </div>
       </div>
 

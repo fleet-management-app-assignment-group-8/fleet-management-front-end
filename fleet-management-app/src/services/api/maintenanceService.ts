@@ -5,7 +5,7 @@
  * Connects to Flask maintenance service running on port 5001.
  */
 
-import type { MaintenanceItem } from '@/types';
+import type { MaintenanceItem, MaintenancePart } from '@/types';
 import { baseApi, type ApiResponse } from './baseApi';
 
 export interface MaintenanceSummary {
@@ -47,6 +47,7 @@ export interface MaintenanceCreateData {
   assigned_to?: string;
   assigned_technician?: string;
   notes?: string;
+  parts_needed?: MaintenancePart[];
 }
 
 export interface MaintenanceUpdateData {
@@ -64,8 +65,8 @@ export interface MaintenanceUpdateData {
   assigned_to?: string;
   assigned_technician?: string;
   notes?: string;
-  parts_needed?: any;
-  attachments?: any;
+  parts_needed?: MaintenancePart[];
+  attachments?: string[];
 }
 
 // New Types
