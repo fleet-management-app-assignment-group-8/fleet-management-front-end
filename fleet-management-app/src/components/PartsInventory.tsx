@@ -526,6 +526,24 @@ function PartForm({
   formData: Partial<Part>; 
   setFormData: React.Dispatch<React.SetStateAction<Partial<Part>>>; 
 }) {
+  const [newUsedIn, setNewUsedIn] = useState('');
+
+  const addUsedIn = () => {
+    if (!newUsedIn.trim()) return;
+    setFormData(prev => ({
+      ...prev,
+      used_in: [...(prev.used_in || []), newUsedIn.trim()]
+    }));
+    setNewUsedIn('');
+  };
+
+  const removeUsedIn = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      used_in: (prev.used_in || []).filter((_, i) => i !== index)
+    }));
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-2 gap-4">
@@ -609,6 +627,31 @@ function PartForm({
           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
           placeholder="Shelf A-12, Warehouse Section C"
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Used In (Maintenance Types)</Label>
+        <div className="flex gap-2">
+          <Input
+            value={newUsedIn}
+            onChange={(e) => setNewUsedIn(e.target.value)}
+            placeholder="Add maintenance type (e.g. Oil Change)"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addUsedIn())}
+          />
+          <Button type="button" onClick={addUsedIn} size="icon" variant="outline">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {formData.used_in?.map((item, idx) => (
+            <Badge key={idx} variant="secondary" className="gap-1">
+              {item}
+              <button onClick={() => removeUsedIn(idx)} className="ml-1 hover:text-destructive">
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
       </div>
     </div>
   );

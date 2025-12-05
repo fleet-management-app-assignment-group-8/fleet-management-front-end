@@ -484,6 +484,41 @@ function TechnicianForm({
   formData: Partial<Technician>; 
   setFormData: React.Dispatch<React.SetStateAction<Partial<Technician>>>; 
 }) {
+  const [newSpec, setNewSpec] = useState('');
+  const [newCert, setNewCert] = useState('');
+
+  const addSpec = () => {
+    if (!newSpec.trim()) return;
+    setFormData(prev => ({
+      ...prev,
+      specialization: [...(prev.specialization || []), newSpec.trim()]
+    }));
+    setNewSpec('');
+  };
+
+  const removeSpec = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      specialization: (prev.specialization || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const addCert = () => {
+    if (!newCert.trim()) return;
+    setFormData(prev => ({
+      ...prev,
+      certifications: [...(prev.certifications || []), newCert.trim()]
+    }));
+    setNewCert('');
+  };
+
+  const removeCert = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      certifications: (prev.certifications || []).filter((_, i) => i !== index)
+    }));
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-2 gap-4">
@@ -533,6 +568,56 @@ function TechnicianForm({
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             placeholder="555-0101"
           />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Specializations</Label>
+        <div className="flex gap-2">
+          <Input
+            value={newSpec}
+            onChange={(e) => setNewSpec(e.target.value)}
+            placeholder="Add specialization (e.g. Engines)"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSpec())}
+          />
+          <Button type="button" onClick={addSpec} size="icon" variant="outline">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {formData.specialization?.map((spec, idx) => (
+            <Badge key={idx} variant="secondary" className="gap-1">
+              {spec}
+              <button onClick={() => removeSpec(idx)} className="ml-1 hover:text-destructive">
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Certifications</Label>
+        <div className="flex gap-2">
+          <Input
+            value={newCert}
+            onChange={(e) => setNewCert(e.target.value)}
+            placeholder="Add certification (e.g. ASE Master)"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCert())}
+          />
+          <Button type="button" onClick={addCert} size="icon" variant="outline">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {formData.certifications?.map((cert, idx) => (
+            <Badge key={idx} variant="outline" className="gap-1">
+              {cert}
+              <button onClick={() => removeCert(idx)} className="ml-1 hover:text-destructive">
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
         </div>
       </div>
 

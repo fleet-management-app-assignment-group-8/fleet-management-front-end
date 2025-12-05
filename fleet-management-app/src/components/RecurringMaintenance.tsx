@@ -625,6 +625,19 @@ function RecurringScheduleForm({
           placeholder="Service Center A"
         />
       </div>
+
+      {formData.id && (
+        <div className="space-y-2">
+          <Label htmlFor="nextScheduled">Next Scheduled Date</Label>
+          <Input
+            id="nextScheduled"
+            type="datetime-local"
+            value={formData.next_scheduled ? new Date(formData.next_scheduled).toISOString().slice(0, 16) : ''}
+            onChange={(e) => setFormData({ ...formData, next_scheduled: new Date(e.target.value).toISOString() })}
+          />
+          <p className="text-xs text-muted-foreground">Override the automatically calculated next execution date</p>
+        </div>
+      )}
     </div>
   );
 }
