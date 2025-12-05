@@ -6,10 +6,11 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Loader } from './ui/loader';
 import { Alert, AlertDescription } from './ui/alert';
-import { formService } from '@/services/api';
-import type { DriverForm, DriverFormFormState } from '@/types';
+import { formService, driverService } from '@/services/api';
+import type { DriverForm, DriverFormFormState, Driver } from '@/types';
 import { 
   Plus, 
   AlertCircle,
@@ -29,6 +30,7 @@ export function DriverForms() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState<number | null>(null);
   const [driverForms, setDriverForms] = useState<DriverForm[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
 
   const [newForm, setNewForm] = useState<DriverFormFormState>({
     driverId: 0,
@@ -40,9 +42,19 @@ export function DriverForms() {
     vehicleId: undefined
   });
 
-  // Fetch all forms on component mount
+  // Fetch all forms and drivers on component mount
   useEffect(() => {
-    fetchForms();
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([fetchForms(), fetchDrivers()]);
+      } catch (err) {
+        console.error('Error loading data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
   // Fetch forms for selected driver
@@ -53,7 +65,6 @@ export function DriverForms() {
   }, [selectedDriverId]);
 
   const fetchForms = async () => {
-    setIsLoading(true);
     setError(null);
     try {
       const response = await formService.getAll();
@@ -65,8 +76,17 @@ export function DriverForms() {
     } catch (err) {
       setError('An unexpected error occurred while fetching forms');
       console.error('Error fetching forms:', err);
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  const fetchDrivers = async () => {
+    try {
+      const response = await driverService.getAll();
+      if (response.success && response.data) {
+        setDrivers(driverService.transformDrivers(response.data));
+      }
+    } catch (err) {
+      console.error('Error fetching drivers:', err);
     }
   };
 
@@ -106,6 +126,20 @@ export function DriverForms() {
       console.error('Error creating form:', err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDriverSelect = (driverIdString: string) => {
+    const driverId = parseInt(driverIdString);
+    const selectedDriver = drivers.find(d => d.id === driverIdString || d.driverId === driverId);
+    
+    if (selectedDriver) {
+      setNewForm(prev => ({
+        ...prev,
+        driverId: driverId,
+        driverName: selectedDriver.name || selectedDriver.fullName || '',
+        vehicleNumber: selectedDriver.vehicle !== 'Unassigned' ? selectedDriver.vehicle || '' : ''
+      }));
     }
   };
 
@@ -269,15 +303,22 @@ export function DriverForms() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="driverId">Driver ID</Label>
-              <Input
-                id="driverId"
-                type="number"
-                value={newForm.driverId || ''}
-                onChange={(e) => setNewForm({ ...newForm, driverId: parseInt(e.target.value) || 0 })}
-                placeholder="1"
-                disabled={isSubmitting}
-              />
+              <Label htmlFor="driverId">Select Driver</Label>
+              <Select 
+                value={newForm.driverId ? newForm.driverId.toString() : ''} 
+                onValueChange={handleDriverSelect}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a driver" />
+                </SelectTrigger>
+                <SelectContent>
+                  {drivers.map((driver) => (
+                    <SelectItem key={driver.id} value={driver.id || ''}>
+                      {driver.name} (ID: {driver.id})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="driverName">Driver Name</Label>
@@ -285,8 +326,9 @@ export function DriverForms() {
                 id="driverName"
                 value={newForm.driverName}
                 onChange={(e) => setNewForm({ ...newForm, driverName: e.target.value })}
-                placeholder="John Smith"
-                disabled={isSubmitting}
+                placeholder="Driver Name"
+                disabled={true} 
+                className="bg-muted"
               />
             </div>
             <div className="space-y-2">

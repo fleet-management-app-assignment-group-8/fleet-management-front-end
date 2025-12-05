@@ -23,7 +23,8 @@ import {
   Clock,
   UserX,
   Star,
-  AlertCircle
+  AlertCircle,
+  Edit
 } from 'lucide-react';
 
 export function DriverManagement() {
@@ -33,12 +34,22 @@ export function DriverManagement() {
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [driverToEdit, setDriverToEdit] = useState<Driver | null>(null);
   const [driverToAssign, setDriverToAssign] = useState<Driver | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [newDriver, setNewDriver] = useState<DriverFormState>({
+    fullName: '',
+    email: '',
+    phone: '',
+    licenseNumber: '',
+    expiryDate: '',
+  });
+
+  const [editDriverForm, setEditDriverForm] = useState<DriverFormState>({
     fullName: '',
     email: '',
     phone: '',
@@ -114,6 +125,55 @@ export function DriverManagement() {
         variant: "destructive"
       });
       console.error('Error creating driver:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditClick = (driver: Driver) => {
+    setDriverToEdit(driver);
+    setEditDriverForm({
+      fullName: driver.name || '',
+      email: driver.email,
+      phone: driver.phone,
+      licenseNumber: driver.licenseNumber,
+      expiryDate: driver.licenseExpiry || ''
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateDriver = async () => {
+    if (!driverToEdit || !driverToEdit.id) return;
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const response = await driverService.update(driverToEdit.id, editDriverForm);
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "Driver updated successfully",
+        });
+        await fetchDrivers();
+        setIsEditDialogOpen(false);
+        setDriverToEdit(null);
+      } else {
+        const errorMessage = response.error || 'Failed to update driver';
+        setError(errorMessage);
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      const errorMessage = 'An unexpected error occurred while updating driver';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      console.error('Error updating driver:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -254,6 +314,14 @@ export function DriverManagement() {
                   </div>
                 </div>
                 {getStatusBadge(driver.status || 'unavailable')}
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-8 w-8 ml-2"
+                  onClick={() => handleEditClick(driver)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -399,6 +467,82 @@ export function DriverManagement() {
               disabled={isSubmitting || !newDriver.fullName || !newDriver.email || !newDriver.phone || !newDriver.licenseNumber || !newDriver.expiryDate}
             >
               {isSubmitting ? 'Adding...' : 'Add Driver'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Driver Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Driver</DialogTitle>
+            <DialogDescription>
+              Update driver details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Full Name</Label>
+              <Input
+                id="edit-name"
+                value={editDriverForm.fullName}
+                onChange={(e) => setEditDriverForm({ ...editDriverForm, fullName: e.target.value })}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email Address</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editDriverForm.email}
+                onChange={(e) => setEditDriverForm({ ...editDriverForm, email: e.target.value })}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Input
+                id="edit-phone"
+                value={editDriverForm.phone}
+                onChange={(e) => setEditDriverForm({ ...editDriverForm, phone: e.target.value })}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-licenseNumber">License Number</Label>
+              <Input
+                id="edit-licenseNumber"
+                value={editDriverForm.licenseNumber}
+                onChange={(e) => setEditDriverForm({ ...editDriverForm, licenseNumber: e.target.value })}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-expiryDate">License Expiry Date</Label>
+              <Input
+                id="edit-expiryDate"
+                type="date"
+                value={editDriverForm.expiryDate}
+                onChange={(e) => setEditDriverForm({ ...editDriverForm, expiryDate: e.target.value })}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdateDriver}
+              disabled={isSubmitting || !editDriverForm.fullName || !editDriverForm.email || !editDriverForm.phone || !editDriverForm.licenseNumber || !editDriverForm.expiryDate}
+            >
+              {isSubmitting ? 'Updating...' : 'Update Driver'}
             </Button>
           </DialogFooter>
         </DialogContent>
