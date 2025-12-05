@@ -54,6 +54,12 @@
     "tailwind-merge": "*",
     "vaul": "^1.1.2"
   },
+  "overrides": {
+    "react-day-picker": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
