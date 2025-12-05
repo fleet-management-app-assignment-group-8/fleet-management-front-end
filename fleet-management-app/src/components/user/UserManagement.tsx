@@ -185,12 +185,12 @@ export function UserManagement() {
           <p className="text-muted-foreground">Manage system users, roles, and permissions</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/settings">
+          {/* <Link href="/settings">
             <Button variant="outline">
               <Terminal className="h-4 w-4 mr-2" />
               Developer Testing
             </Button>
-          </Link>
+          </Link> */}
           <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -333,7 +333,7 @@ export function UserManagement() {
         {/* User Directory */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>User Directory</CardTitle>
+            <CardTitle>User Directory ( ToDo )</CardTitle>
             <CardDescription>Manage and monitor all system users</CardDescription>
             <div className="flex gap-2 mt-4">
               <div className="relative flex-1">
@@ -452,7 +452,7 @@ export function UserManagement() {
         {/* Activity Feed */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Recent Activity ( ToDo )</CardTitle>
             <CardDescription>User actions and system events</CardDescription>
           </CardHeader>
           <CardContent>
