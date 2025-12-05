@@ -28,9 +28,9 @@ const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
   { id: 'vehicles', label: 'Vehicles', icon: Truck, href: '/vehicles' },
   { id: 'drivers', label: 'Drivers', icon: Users, href: '/drivers' },
-  { id: 'trips', label: 'Trips & Routes', icon: Route, href: '/trips' },
-  { id: 'maintenance', label: 'Maintenance', icon: Wrench, href: '/maintenance' },
   { id: 'fuel', label: 'Fuel Management', icon: Fuel, href: '/fuel' },
+  { id: 'maintenance', label: 'Maintenance', icon: Wrench, href: '/maintenance' },
+  { id: 'trips', label: 'Trips & Routes', icon: Route, href: '/trips' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/analytics' },
   { id: 'reports', label: 'Reports', icon: FileText, href: '/reports' },
 ];

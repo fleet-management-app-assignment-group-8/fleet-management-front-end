@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Loader } from './ui/loader';
 import { Alert, AlertDescription } from './ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { driverService } from '@/services/api';
-import type { Driver, DriverFormState } from '@/types';
+import { driverService, vehicleService } from '@/services/api';
+import type { Driver, DriverFormState, Vehicle } from '@/types';
 import { 
   Search, 
   Plus, 
@@ -59,13 +59,25 @@ export function DriverManagement() {
 
   const [drivers, setDrivers] = useState<Driver[]>([]);
 
-  const availableVehicles = ['VH-0123', 'VH-0456', 'VH-0789', 'VH-0321', 'VH-0555', 'VH-0666'];
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState('');
 
-  // Fetch drivers on component mount
+  // Fetch drivers and vehicles on component mount
   useEffect(() => {
     fetchDrivers();
+    fetchVehicles();
   }, []);
+
+  const fetchVehicles = async () => {
+    try {
+      const response = await vehicleService.getAll();
+      if (response.success && response.data) {
+        setVehicles(response.data);
+      }
+    } catch (err) {
+      console.error('Error fetching vehicles:', err);
+    }
+  };
 
   const fetchDrivers = async () => {
     setIsLoading(true);
@@ -184,22 +196,51 @@ export function DriverManagement() {
     setIsDetailsDialogOpen(true);
   };
 
+  const getAssignedVehicle = useCallback((driverId: string) => {
+    if (!driverId) return undefined;
+    return vehicles.find(v => v.driverId === driverId);
+  }, [vehicles]);
+
   const handleAssignVehicle = (driver: Driver) => {
     setDriverToAssign(driver);
-    setSelectedVehicle(driver.vehicle && driver.vehicle !== 'Unassigned' ? driver.vehicle : '');
+    const assigned = getAssignedVehicle(driver.id || '');
+    setSelectedVehicle(assigned ? assigned.id : '');
     setIsAssignDialogOpen(true);
   };
 
-  const handleConfirmAssignment = () => {
-    if (driverToAssign && selectedVehicle) {
-      setDrivers(drivers.map(driver => 
-        driver.id === driverToAssign.id 
-          ? { ...driver, vehicle: selectedVehicle, status: 'active' }
-          : driver
-      ));
-      setIsAssignDialogOpen(false);
-      setDriverToAssign(null);
-      setSelectedVehicle('');
+  const handleConfirmAssignment = async () => {
+    if (!driverToAssign || !driverToAssign.id || !selectedVehicle) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await vehicleService.assignDriver(selectedVehicle, driverToAssign.id);
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "Vehicle assigned successfully",
+        });
+        // Refresh both lists to update statuses
+        await fetchVehicles();
+        await fetchDrivers();
+        setIsAssignDialogOpen(false);
+        setDriverToAssign(null);
+        setSelectedVehicle('');
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to assign vehicle",
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      console.error('Error assigning vehicle:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -360,7 +401,14 @@ export function DriverManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-sm text-muted-foreground">Current Vehicle:</span>
-                  <p className="font-medium">{driver.vehicle}</p>
+                  <p className="font-medium">
+                    {(() => {
+                      const v = getAssignedVehicle(driver.id || '');
+                      return v 
+                        ? `${v.make} ${v.model} ${v.year} (${v.license})` 
+                        : 'Unassigned';
+                    })()}
+                  </p>
                 </div>
                 <div>
                   <span className="text-sm text-muted-foreground">Hours This Week:</span>
@@ -588,7 +636,14 @@ export function DriverManagement() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Assigned Vehicle</p>
-                  <p className="font-medium">{selectedDriver.vehicle}</p>
+                  <p className="font-medium">
+                    {(() => {
+                      const v = getAssignedVehicle(selectedDriver.id || '');
+                      return v 
+                        ? `${v.make} ${v.model} ${v.year} (${v.license})` 
+                        : 'Unassigned';
+                    })()}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Join Date</p>
@@ -635,11 +690,22 @@ export function DriverManagement() {
                   <SelectValue placeholder="Choose a vehicle" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableVehicles.map((vehicle) => (
-                    <SelectItem key={vehicle} value={vehicle}>
-                      {vehicle}
+                  {vehicles.length > 0 ? (
+                    vehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        <div className="flex flex-col items-start text-left">
+                          <span className="font-medium">{vehicle.make} {vehicle.model} {vehicle.year}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {vehicle.license} • {vehicle.status}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-vehicles" disabled>
+                      No vehicles available
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -648,7 +714,14 @@ export function DriverManagement() {
                 <p className="text-sm text-muted-foreground">Driver</p>
                 <p className="font-medium">{driverToAssign.name}</p>
                 <p className="text-sm text-muted-foreground mt-2">Current Assignment</p>
-                <p className="font-medium">{driverToAssign.vehicle}</p>
+                <p className="font-medium">
+                  {(() => {
+                    const v = getAssignedVehicle(driverToAssign.id || '');
+                    return v 
+                      ? `${v.make} ${v.model} ${v.year} (${v.license})` 
+                      : 'Unassigned';
+                  })()}
+                </p>
               </div>
             )}
           </div>

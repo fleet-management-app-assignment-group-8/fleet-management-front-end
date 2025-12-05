@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Download, Calendar, Filter, TrendingUp, Clock, DollarSign, Activity } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -21,17 +21,26 @@ import {
   TableRow,
 } from './ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { 
-  fuelConsumptionData, 
-  vehicleUtilizationData, 
-  maintenanceCostsData, 
-  performanceMetrics, 
-  topPerformingDrivers 
-} from './constants/mockData';
+import { reportsService, type GeneratedReport } from '../services/api/reportsService';
+import { useToast } from '../hooks/use-toast';
 
 export function Reports() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [recentReports, setRecentReports] = useState<GeneratedReport[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const fetchRecentReports = async () => {
+    const response = await reportsService.getRecentReports();
+    if (response.success) {
+      setRecentReports(response.data);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecentReports();
+  }, []);
 
   const reportTypes = [
     {
@@ -39,7 +48,7 @@ export function Reports() {
       name: 'Fleet Performance Report',
       description: 'Comprehensive vehicle utilization and performance metrics',
       icon: TrendingUp,
-      lastGenerated: '2 hours ago',
+      lastGenerated: '2 hours ago', // ideally fetch this too
       schedule: 'Weekly',
       category: 'performance',
     },
@@ -62,14 +71,14 @@ export function Reports() {
       category: 'fuel',
     },
     {
-      id: 'driver-performance',
-      name: 'Driver Performance Report',
-      description: 'Driver safety scores, efficiency, and compliance',
-      icon: Clock,
-      lastGenerated: '5 hours ago',
-      schedule: 'Monthly',
+      id: 'summary',
+      name: 'Fleet Summary Report',
+      description: 'Overall fleet status and key metrics',
+      icon: FileText,
+      lastGenerated: 'Never',
+      schedule: 'Daily',
       category: 'performance',
-    },
+    }
   ];
 
   const scheduledReports = [
@@ -79,70 +88,36 @@ export function Reports() {
     { name: 'Daily Operations Report', schedule: 'Daily at 6 PM', nextRun: 'Today, 6:00 PM', status: 'active' },
   ];
 
-  const recentReports = [
-    { name: 'Fleet Performance - September 2024', date: 'Oct 1, 2024', size: '2.4 MB', format: 'PDF' },
-    { name: 'Maintenance Summary - Q3 2024', date: 'Sep 30, 2024', size: '1.8 MB', format: 'PDF' },
-    { name: 'Fuel Analysis - Week 39', date: 'Sep 28, 2024', size: '856 KB', format: 'Excel' },
-    { name: 'Driver Performance - September', date: 'Sep 27, 2024', size: '1.2 MB', format: 'PDF' },
-  ];
-
-  const generateReport = (reportId: string) => {
-    const now = new Date();
-    const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const reportConfig = reportTypes.find(r => r.id === reportId);
-    
-    if (!reportConfig) return;
-
-    const filename = `${reportConfig.id}_${timestamp}.csv`;
-    let headers: string[] = [];
-    let rows: (string | number)[][] = [];
-
-    switch (reportId) {
-      case 'fleet-performance':
-        headers = ['Metric', 'Value', 'Change', 'Trend'];
-        rows = performanceMetrics.map(m => [m.metric, m.value, m.change, m.trend]);
-        // Append utilization data section
-        rows.push([]);
-        rows.push(['Utilization Status', 'Count', 'Color']);
-        vehicleUtilizationData.forEach(d => rows.push([d.name, d.value, d.color]));
-        break;
-        
-      case 'maintenance-summary':
-        headers = ['Month', 'Scheduled Cost', 'Emergency Cost'];
-        rows = maintenanceCostsData.map(m => [m.month, m.scheduled, m.emergency]);
-        break;
-
-      case 'fuel-consumption':
-        headers = ['Month', 'Consumption (L)', 'Cost'];
-        rows = fuelConsumptionData.map(f => [f.month, f.consumption, f.cost]);
-        break;
-
-      case 'driver-performance':
-        headers = ['Driver Name', 'Safety Score', 'Trips'];
-        rows = topPerformingDrivers.map(d => [d.name, d.score, d.trips]);
-        break;
-    }
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', filename);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+  const generateReport = async (reportId: string) => {
+    setIsLoading(true);
+    try {
+      const response = await reportsService.generateReport(reportId, selectedPeriod);
+      if (response.success) {
+        toast({
+          title: "Report Generated",
+          description: `${response.data.reportName} has been generated successfully.`,
+        });
+        fetchRecentReports(); // Refresh list
+      } else {
+        toast({
+          title: "Generation Failed",
+          description: response.error || "Failed to generate report.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+        toast({
+            title: "Error",
+            description: "An unexpected error occurred.",
+            variant: "destructive",
+        });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const downloadReport = (reportName: string) => {
-    alert(`Downloading ${reportName}...`);
+  const downloadReport = (id: number) => {
+    reportsService.downloadGeneratedReport(id);
   };
 
   return (
@@ -216,9 +191,9 @@ export function Reports() {
                           </p>
                           <Badge variant="secondary">{report.schedule}</Badge>
                         </div>
-                        <Button onClick={() => generateReport(report.id)}>
+                        <Button onClick={() => generateReport(report.id)} disabled={isLoading}>
                           <FileText className="h-4 w-4 mr-2" />
-                          Generate
+                          {isLoading ? 'Generating...' : 'Generate'}
                         </Button>
                       </div>
                     </CardContent>
@@ -285,11 +260,18 @@ export function Reports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentReports.map((report, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{report.name}</TableCell>
-                      <TableCell>{report.date}</TableCell>
-                      <TableCell>{report.size}</TableCell>
+                  {recentReports.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                            No reports generated yet.
+                        </TableCell>
+                    </TableRow>
+                  ) : (
+                    recentReports.map((report) => (
+                    <TableRow key={report.id}>
+                      <TableCell className="font-medium">{report.reportName}</TableCell>
+                      <TableCell>{new Date(report.generatedDate).toLocaleDateString()} {new Date(report.generatedDate).toLocaleTimeString()}</TableCell>
+                      <TableCell>{report.fileSize}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{report.format}</Badge>
                       </TableCell>
@@ -297,14 +279,14 @@ export function Reports() {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => downloadReport(report.name)}
+                          onClick={() => downloadReport(report.id)}
                         >
                           <Download className="h-4 w-4 mr-2" />
                           Download
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )))}
                 </TableBody>
               </Table>
             </CardContent>

@@ -15,15 +15,15 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
-import { Plus, MapPin, Fuel, Calendar, RefreshCw, AlertCircle, Edit } from 'lucide-react';
+import { Plus, MapPin, Fuel, Calendar, RefreshCw, AlertCircle, Edit, UserPlus } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 
 // Import types and utilities
-import type { Vehicle, VehicleFormState, VehicleStatus } from '@/types';
+import type { Vehicle, VehicleFormState, VehicleStatus, Driver } from '@/types';
 import { useFormState, useDialogState, useDataFilter } from '@/hooks';
 import { StatusBadge, SearchFilter } from '@/components/shared';
 import { getVehicleStatusConfig, getFuelLevelColor } from '@/utils';
-import { vehicleService } from '@/services/api';
+import { vehicleService, driverService } from '@/services/api';
 
 export function VehicleManagement() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,6 +31,12 @@ export function VehicleManagement() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Driver assignment state
+  const [isAssignDriverDialogOpen, setIsAssignDriverDialogOpen] = useState(false);
+  const [vehicleToAssignDriver, setVehicleToAssignDriver] = useState<Vehicle | null>(null);
+  const [selectedDriverId, setSelectedDriverId] = useState<string>('');
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   
   // Use custom hooks for dialog state management
   const addDialog = useDialogState();
@@ -82,7 +88,19 @@ export function VehicleManagement() {
   // Fetch vehicles on mount and when filter changes
   useEffect(() => {
     fetchVehicles();
+    fetchDrivers();
   }, [statusFilter]);
+
+  const fetchDrivers = async () => {
+    try {
+      const response = await driverService.getAll();
+      if (response.success && response.data) {
+        setDrivers(driverService.transformDrivers(response.data));
+      }
+    } catch (err) {
+      console.error('Error fetching drivers:', err);
+    }
+  };
 
   const fetchVehicles = async () => {
     setIsLoading(true);
@@ -174,6 +192,63 @@ export function VehicleManagement() {
     filters: { status: statusFilter }
   });
 
+  const handleAssignDriverClick = (vehicle: Vehicle) => {
+    setVehicleToAssignDriver(vehicle);
+    // If vehicle already has a driver assigned, select them by default if they exist in the list
+    // Note: The vehicle.driverId might be a name or an ID depending on backend, 
+    // but we'll try to match it. If it's a name, we might not find it in drivers by ID.
+    // Assuming vehicle.driverId stores the driver's ID or Name.
+    // Let's try to find a driver whose name matches or ID matches.
+    const currentDriver = drivers.find(d => d.id === vehicle.driverId || d.name === vehicle.driverId);
+    setSelectedDriverId(currentDriver?.id || 'unassigned');
+    setIsAssignDriverDialogOpen(true);
+  };
+
+  const handleConfirmDriverAssignment = async () => {
+    if (!vehicleToAssignDriver) return;
+
+    setIsLoading(true);
+    try {
+      let response;
+      
+      if (selectedDriverId === 'unassigned' || !selectedDriverId) {
+        response = await vehicleService.unassignDriver(vehicleToAssignDriver.id);
+      } else {
+        // Find the driver object to ensure we have a valid ID
+        // (though selectedDriverId should be the ID from the Select)
+        const driver = drivers.find(d => d.id === selectedDriverId);
+        
+        if (!driver || !driver.id) {
+           setError('Invalid driver selected');
+           setIsLoading(false);
+           return;
+        }
+        
+        response = await vehicleService.assignDriver(vehicleToAssignDriver.id, driver.id);
+      }
+
+      if (response && response.success) {
+        setIsAssignDriverDialogOpen(false);
+        setVehicleToAssignDriver(null);
+        setSelectedDriverId('');
+        
+        // Show success message if possible (using toast would be better but using error state for now or just clearing it)
+        setError(null);
+        
+        await fetchVehicles();
+        // Optionally refresh drivers too
+        await fetchDrivers(); 
+      } else {
+        setError(response?.error || 'Failed to update driver assignment');
+      }
+    } catch (err) {
+      setError('An error occurred while assigning driver');
+      console.error('Error assigning driver:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 overflow-auto h-full">
       <div className="flex items-center justify-between">
@@ -261,8 +336,23 @@ export function VehicleManagement() {
                   <p className="font-medium">{vehicle.license}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Driver ID:</span>
-                  <p className="font-medium">{vehicle.driverId || 'Unassigned'}</p>
+                  <span className="text-muted-foreground">Driver:</span>
+                  <p className="font-medium">
+                    {(() => {
+                      const driverId = vehicle.driverId;
+                      if (!driverId || driverId === 'Unassigned') return 'Unassigned';
+                      
+                      // Try to find driver details in the drivers list
+                      const assignedDriver = drivers.find(d => d.id === driverId || d.driverId?.toString() === driverId);
+                      
+                      if (assignedDriver) {
+                        return `${assignedDriver.name} (ID: ${assignedDriver.id})`;
+                      }
+                      
+                      // Fallback to just ID if driver not found in list
+                      return `ID: ${driverId}`;
+                    })()}
+                  </p>
                 </div>
               </div>
 
@@ -302,6 +392,14 @@ export function VehicleManagement() {
                   onClick={() => handleViewDetails(vehicle)}
                 >
                   View Details
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleAssignDriverClick(vehicle)}
+                >
+                  Assign Driver
                 </Button>
                 <Button 
                   variant="outline" 
@@ -582,6 +680,55 @@ export function VehicleManagement() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={detailsDialog.closeDialog}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Driver Dialog */}
+      <Dialog open={isAssignDriverDialogOpen} onOpenChange={setIsAssignDriverDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Assign Driver</DialogTitle>
+            <DialogDescription>
+              Assign a driver to {vehicleToAssignDriver?.year} {vehicleToAssignDriver?.make} {vehicleToAssignDriver?.model}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="driver">Select Driver</Label>
+              <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a driver" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {drivers.map((driver) => (
+                    <SelectItem key={driver.id} value={driver.id || ''}>
+                      <div className="flex flex-col items-start text-left">
+                        <span className="font-medium">{driver.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {driver.licenseNumber} • {driver.status}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {vehicleToAssignDriver && (
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">Vehicle</p>
+                <p className="font-medium">{vehicleToAssignDriver.make} {vehicleToAssignDriver.model} ({vehicleToAssignDriver.license})</p>
+                <p className="text-sm text-muted-foreground mt-2">Current Driver</p>
+                <p className="font-medium">{vehicleToAssignDriver.driverId || 'Unassigned'}</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAssignDriverDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleConfirmDriverAssignment} disabled={isLoading}>
+              {isLoading ? 'Assigning...' : 'Assign'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

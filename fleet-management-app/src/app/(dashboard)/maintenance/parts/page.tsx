@@ -1,15 +1,15 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Loader } from '@/components/ui/loader';
 
 const PartsInventory = dynamic(() => 
   import('@/components/PartsInventory').then(mod => ({ default: mod.PartsInventory })),
   {
-    loading: () => <div className="flex items-center justify-center h-screen">Loading parts inventory...</div>,
+    loading: () => <Loader text="Loading parts inventory..." />,
   }
 );
 
 export default function PartsInventoryPage() {
   return <PartsInventory />;
 }
-

@@ -13,9 +13,21 @@ import {
   BarChart3,
   AlertTriangle,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Pencil
 } from 'lucide-react';
 import { vehicleService } from '@/services/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Label } from "./ui/label";
+import { Slider } from "./ui/slider";
+import { Input } from "./ui/input";
 
 interface FuelVehicle {
   vehicleId: string;
@@ -32,6 +44,12 @@ export function FuelManagement() {
   const [fuelData, setFuelData] = useState<FuelVehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Edit state
+  const [selectedVehicle, setSelectedVehicle] = useState<FuelVehicle | null>(null);
+  const [newFuelLevel, setNewFuelLevel] = useState<number>(0);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchFuelData();
@@ -52,6 +70,38 @@ export function FuelManagement() {
       console.error('Error fetching fuel data:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleEditClick = (vehicle: FuelVehicle) => {
+    setSelectedVehicle(vehicle);
+    setNewFuelLevel(vehicle.fuelLevel);
+    setIsUpdateDialogOpen(true);
+  };
+
+  const handleUpdateFuel = async () => {
+    if (!selectedVehicle) return;
+    
+    setIsUpdating(true);
+    try {
+      const response = await vehicleService.update(selectedVehicle.vehicleId, {
+        fuelLevel: newFuelLevel
+      });
+
+      if (response.success) {
+        setFuelData(prevData => prevData.map(v => 
+          v.vehicleId === selectedVehicle.vehicleId 
+            ? { ...v, fuelLevel: newFuelLevel } 
+            : v
+        ));
+        setIsUpdateDialogOpen(false);
+      } else {
+        console.error('Failed to update fuel level:', response.error);
+      }
+    } catch (error) {
+      console.error('Error updating fuel level:', error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -189,14 +239,25 @@ export function FuelManagement() {
           {fuelData.map((vehicle) => (
             <Card key={vehicle.vehicleId} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
                     <CardTitle className="text-lg">{vehicle.make} {vehicle.model}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Driver: {vehicle.currentDriver || 'Unassigned'}
-                    </p>
+                    <div className="flex flex-col text-sm text-muted-foreground gap-0.5">
+                      <span className="font-medium text-foreground/80">ID: {vehicle.vehicleIdentifier || vehicle.vehicleId}</span>
+                      <span>Driver: {vehicle.currentDriver || 'Unassigned'}</span>
+                    </div>
                   </div>
-                  {getStatusBadge(vehicle.fuelLevel)}
+                  <div className="flex flex-col items-end gap-2">
+                    {getStatusBadge(vehicle.fuelLevel)}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleEditClick(vehicle)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -267,6 +328,67 @@ export function FuelManagement() {
           </CardContent>
         </Card>
       )}
+
+      {/* Update Fuel Dialog */}
+      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Fuel Level</DialogTitle>
+            <DialogDescription>
+              Adjust the fuel level for {selectedVehicle?.vehicleIdentifier}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label>Current Level</Label>
+                <span className={`text-lg font-bold ${
+                  newFuelLevel < 15 ? 'text-red-500' : 
+                  newFuelLevel < 30 ? 'text-yellow-500' : 'text-green-500'
+                }`}>
+                  {newFuelLevel}%
+                </span>
+              </div>
+              
+              <Slider
+                value={[newFuelLevel]}
+                min={0}
+                max={100}
+                step={1}
+                onValueChange={(vals) => setNewFuelLevel(vals[0])}
+                className="py-4"
+              />
+
+              <div className="flex items-center gap-4">
+                <Label className="whitespace-nowrap">Manual Entry</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={newFuelLevel}
+                  onChange={(e) => {
+                    const val = Math.min(100, Math.max(0, Number(e.target.value)));
+                    setNewFuelLevel(val);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUpdateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateFuel} disabled={isUpdating}>
+              {isUpdating ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : 'Update Fuel Level'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

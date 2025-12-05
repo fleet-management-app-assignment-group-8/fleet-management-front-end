@@ -1,15 +1,15 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Loader } from '@/components/ui/loader';
 
 const MaintenanceReports = dynamic(() => 
   import('@/components/MaintenanceReports').then(mod => ({ default: mod.MaintenanceReports })),
   {
-    loading: () => <div className="flex items-center justify-center h-screen">Loading reports...</div>,
+    loading: () => <Loader text="Loading reports..." />,
   }
 );
 
 export default function MaintenanceReportsPage() {
   return <MaintenanceReports />;
 }
-

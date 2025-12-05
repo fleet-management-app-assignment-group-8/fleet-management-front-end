@@ -3,15 +3,15 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Loader } from '@/components/ui/loader';
 
 const MaintenanceDashboard = dynamic(() => 
   import('@/components/MaintenanceDashboard').then(mod => ({ default: mod.MaintenanceDashboard })),
   {
-    loading: () => <div className="flex items-center justify-center h-screen">Loading maintenance dashboard...</div>,
+    loading: () => <Loader text="Loading maintenance dashboard..." />,
   }
 );
 
 export default function MaintenancePage() {
   return <MaintenanceDashboard />;
 }
-

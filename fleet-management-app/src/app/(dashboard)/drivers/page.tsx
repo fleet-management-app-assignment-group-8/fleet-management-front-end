@@ -6,39 +6,40 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, FileText, Calendar, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Loader } from '@/components/ui/loader';
 
 const DriverManagement = dynamic(() => 
   import('@/components/DriverManagement').then(mod => ({ default: mod.DriverManagement })),
   {
-    loading: () => <div className="flex items-center justify-center h-screen">Loading drivers...</div>,
+    loading: () => <Loader text="Loading drivers..." />,
   }
 );
 
 const DriverForms = dynamic(() => 
   import('@/components/DriverForms').then(mod => ({ default: mod.DriverForms })),
   {
-    loading: () => <div className="flex items-center justify-center h-screen">Loading performance forms...</div>,
+    loading: () => <Loader text="Loading performance forms..." />,
   }
 );
 
 const DriverScheduleManagement = dynamic(() => 
   import('@/components/DriverSchedule').then(mod => ({ default: mod.DriverScheduleManagement })),
   {
-    loading: () => <div className="flex items-center justify-center h-screen">Loading schedules...</div>,
+    loading: () => <Loader text="Loading schedules..." />,
   }
 );
 
 const ScheduleConflictChecker = dynamic(() => 
   import('@/components/ScheduleConflictChecker').then(mod => ({ default: mod.ScheduleConflictChecker })),
   {
-    loading: () => <div className="flex items-center justify-center h-screen">Loading conflict checker...</div>,
+    loading: () => <Loader text="Loading conflict checker..." />,
   }
 );
 
 const PerformanceTrendsChart = dynamic(() => 
   import('@/components/PerformanceTrendsChart').then(mod => ({ default: mod.PerformanceTrendsChart })),
   {
-    loading: () => <div className="flex items-center justify-center h-screen">Loading trends...</div>,
+    loading: () => <Loader text="Loading trends..." />,
   }
 );
 

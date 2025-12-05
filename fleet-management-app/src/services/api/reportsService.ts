@@ -5,7 +5,7 @@
  * Provides fleet performance, fuel consumption, and maintenance reports.
  */
 
-import { vehicleApi, type ApiResponse } from './baseApi';
+import { vehicleApi, type ApiResponse, API_CONFIG } from './baseApi';
 
 // Report types based on backend responses
 export interface FleetPerformanceReport {
@@ -100,6 +100,7 @@ export interface FleetSummaryReport {
     averageFuelLevel: number;
     lowFuelCount: number;
     criticalFuelCount: number;
+    fuelTypeDistribution?: Array<{ fuelType: string; count: number }>;
   };
   maintenance: {
     inService: number;
@@ -111,6 +112,15 @@ export interface FleetSummaryReport {
     highestMileage: number;
     lowestMileage: number;
   };
+}
+
+export interface GeneratedReport {
+  id: number;
+  reportName: string;
+  reportType: string;
+  generatedDate: string;
+  fileSize: string;
+  format: string;
 }
 
 class ReportsService {
@@ -199,8 +209,55 @@ class ReportsService {
   }
 
   /**
+   * Generate a report
+   */
+  async generateReport(reportType: string, period: string = 'month'): Promise<ApiResponse<GeneratedReport>> {
+    try {
+      const response = await vehicleApi.post<GeneratedReport>(
+        `${this.endpoint}/generate/${reportType}?period=${period}`,
+        {}
+      );
+      return response;
+    } catch (error) {
+      console.error('Error generating report:', error);
+      return {
+        data: {} as GeneratedReport,
+        success: false,
+        error: 'Failed to generate report'
+      };
+    }
+  }
+
+  /**
+   * Get recent reports
+   */
+  async getRecentReports(): Promise<ApiResponse<GeneratedReport[]>> {
+    try {
+      const response = await vehicleApi.get<GeneratedReport[]>(
+        `${this.endpoint}/recent`
+      );
+      return response;
+    } catch (error) {
+      console.error('Error fetching recent reports:', error);
+      return {
+        data: [],
+        success: false,
+        error: 'Failed to fetch recent reports'
+      };
+    }
+  }
+
+  /**
+   * Download generated report
+   */
+  downloadGeneratedReport(id: number): void {
+    window.open(`${API_CONFIG.VEHICLE_SERVICE_URL}${this.endpoint}/${id}/download`, '_blank');
+  }
+
+  /**
    * Download report as PDF
    * Note: Backend implementation needed for PDF generation
+   * @deprecated Use downloadGeneratedReport instead
    */
   async downloadReport(reportType: string, period?: string): Promise<Blob | null> {
     try {
@@ -215,4 +272,3 @@ class ReportsService {
 }
 
 export const reportsService = new ReportsService();
-

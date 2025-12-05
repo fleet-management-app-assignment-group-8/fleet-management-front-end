@@ -164,6 +164,54 @@ class VehicleService {
   }
 
   /**
+   * Assign driver to vehicle
+   */
+  async assignDriver(vehicleId: string, driverId: string): Promise<ApiResponse<any>> {
+    try {
+      // Find vehicle by license plate if vehicleId looks like a license plate (e.g. VH-XXXX or simple string)
+      // Ideally we should use the internal ID, but the frontend might be passing license plate or formatted ID.
+      // The backend expects a GUID for vehicleId.
+      // If the frontend passed a vehicle object, we should use its ID.
+      
+      // We'll assume vehicleId passed here is the ID. If it's a license plate, we might need to look it up first.
+      // But let's assume the caller passes the correct ID.
+      
+      const response = await vehicleApi.post<any>(
+        `${this.endpoint}/${vehicleId}/assign-driver`,
+        { driverId }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error assigning driver:', error);
+      return {
+        data: null,
+        success: false,
+        error: 'Failed to assign driver'
+      };
+    }
+  }
+
+  /**
+   * Unassign driver from vehicle
+   */
+  async unassignDriver(vehicleId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await vehicleApi.post<any>(
+        `${this.endpoint}/${vehicleId}/unassign-driver`,
+        {}
+      );
+      return response;
+    } catch (error) {
+      console.error('Error unassigning driver:', error);
+      return {
+        data: null,
+        success: false,
+        error: 'Failed to unassign driver'
+      };
+    }
+  }
+
+  /**
    * Get vehicles by status (convenience method)
    */
   async getByStatus(status: string): Promise<ApiResponse<Vehicle[]>> {

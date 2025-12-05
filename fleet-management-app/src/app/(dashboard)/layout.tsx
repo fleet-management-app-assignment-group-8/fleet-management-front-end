@@ -69,7 +69,7 @@ export default function DashboardLayout({
 
   // Show loader while checking authentication
   if (isLoading) {
-    return <Loader />;
+    return <Loader text="Authenticating..." />;
   }
 
   // Don't render dashboard if not authenticated
