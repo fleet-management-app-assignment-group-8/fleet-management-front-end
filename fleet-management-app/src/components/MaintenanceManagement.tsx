@@ -40,13 +40,15 @@ import {
   X
 } from 'lucide-react';
 import { maintenanceService } from '@/services/api';
-import type { MaintenanceItem, MaintenanceStatus, Priority, MaintenancePart } from '@/types';
+import { vehicleService } from '@/services/api/vehicleService';
+import type { MaintenanceItem, MaintenanceStatus, Priority, MaintenancePart, Vehicle } from '@/types';
 import type { MaintenanceCreateData, MaintenanceUpdateData } from '@/services/api/maintenanceService';
 import { useToast } from '@/hooks/use-toast';
 
 export function MaintenanceManagement() {
   const { toast } = useToast();
   const [maintenanceItems, setMaintenanceItems] = useState<MaintenanceItem[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -83,22 +85,29 @@ export function MaintenanceManagement() {
       if (statusFilter !== 'all') filters.status = statusFilter;
       if (priorityFilter !== 'all') filters.priority = priorityFilter;
 
-      const response = await maintenanceService.getAll(filters, currentPage, 10);
+      const [maintenanceResponse, vehiclesResponse] = await Promise.all([
+        maintenanceService.getAll(filters, currentPage, 10),
+        vehicleService.getAll()
+      ]);
       
-      if (response.success && response.data) {
-        setMaintenanceItems(response.data.items);
-        setTotalPages(response.data.pages);
+      if (maintenanceResponse.success && maintenanceResponse.data) {
+        setMaintenanceItems(maintenanceResponse.data.items);
+        setTotalPages(maintenanceResponse.data.pages);
       } else {
         toast({
           title: 'Error',
-          description: response.error || 'Failed to fetch maintenance items',
+          description: maintenanceResponse.error || 'Failed to fetch maintenance items',
           variant: 'destructive',
         });
+      }
+
+      if (vehiclesResponse.success && vehiclesResponse.data) {
+        setVehicles(vehiclesResponse.data);
       }
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to connect to maintenance service',
+        description: 'Failed to connect to services',
         variant: 'destructive',
       });
     } finally {
@@ -345,7 +354,7 @@ export function MaintenanceManagement() {
                   Add a new maintenance item to the schedule
                 </DialogDescription>
               </DialogHeader>
-              <MaintenanceForm formData={formData} setFormData={setFormData} />
+              <MaintenanceForm formData={formData} setFormData={setFormData} vehicles={vehicles} />
               <DialogFooter>
                 <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetForm(); }}>
                   Cancel
@@ -588,7 +597,7 @@ export function MaintenanceManagement() {
               Update maintenance item details
             </DialogDescription>
           </DialogHeader>
-          <MaintenanceForm formData={formData} setFormData={setFormData} isEdit />
+          <MaintenanceForm formData={formData} setFormData={setFormData} isEdit vehicles={vehicles} />
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setSelectedItem(null); resetForm(); }}>
               Cancel
@@ -610,11 +619,13 @@ export function MaintenanceManagement() {
 function MaintenanceForm({ 
   formData, 
   setFormData, 
-  isEdit = false 
+  isEdit = false,
+  vehicles
 }: { 
   formData: Partial<MaintenanceCreateData>; 
   setFormData: React.Dispatch<React.SetStateAction<Partial<MaintenanceCreateData>>>; 
   isEdit?: boolean;
+  vehicles: Vehicle[];
 }) {
   const addPart = () => {
     const newPart: MaintenancePart = { part_id: `NEW-${Date.now()}`, name: '', quantity: 1 };
@@ -650,13 +661,23 @@ function MaintenanceForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="vehicle_id">Vehicle ID *</Label>
-          <Input
-            id="vehicle_id"
-            value={formData.vehicle_id}
-            onChange={(e) => setFormData({ ...formData, vehicle_id: e.target.value })}
-            placeholder="VH-001"
-          />
+          <Label htmlFor="vehicle_id">Vehicle *</Label>
+          <Select 
+            value={formData.vehicle_id} 
+            onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}
+            disabled={isEdit}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Vehicle" />
+            </SelectTrigger>
+            <SelectContent>
+              {vehicles.map((vehicle) => (
+                <SelectItem key={vehicle.id} value={vehicle.id}>
+                  {vehicle.make} {vehicle.model} ({vehicle.licensePlate})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
