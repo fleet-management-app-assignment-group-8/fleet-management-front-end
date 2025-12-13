@@ -1,15 +1,10 @@
 'use client';
 
 /**
- * DASHBOARD LAYOUT - Client-Side Auth Guard
+ * DASHBOARD LAYOUT - Protected with Keycloak
  * 
- * This layout protects all dashboard routes by checking authentication state.
- * Currently uses client-side auth context.
- * 
- * ⚠️ Note: This is client-side only protection. When integrating Keycloak,
- * server-side middleware will provide additional security.
- * 
- * See: docs/AUTHENTICATION.md for Keycloak integration guide
+ * This layout protects all dashboard routes with NextAuth/Keycloak authentication.
+ * Automatically injects JWT tokens into API calls for backend services.
  */
 
 import React, { useEffect } from 'react';
@@ -18,6 +13,7 @@ import { Header } from '@/components/Header';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader } from '@/components/ui/loader';
+import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
 
 export default function DashboardLayout({
   children,
@@ -27,6 +23,9 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, isLoading, logout, updateUser } = useAuth();
+  
+  // Automatically configure API clients with auth token
+  useAuthenticatedApi();
 
   // Redirect to login if not authenticated
   useEffect(() => {

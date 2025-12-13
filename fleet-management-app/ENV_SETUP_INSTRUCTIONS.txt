@@ -1,0 +1,147 @@
+================================================================================
+FRONTEND ENVIRONMENT CONFIGURATION
+================================================================================
+
+Since .env.local files are blocked by .gitignore (for security), you need to
+create this file manually.
+
+LOCATION:
+---------
+fleet-management-app/.env.local
+
+CREATE THE FILE:
+----------------
+1. Navigate to: fleet-management-app/
+2. Create a new file named: .env.local
+3. Copy the content below into the file
+4. Replace the placeholder values
+
+FILE CONTENT:
+-------------
+
+# ============================================================================
+# Keycloak Configuration
+# ============================================================================
+# Client ID from Keycloak (Clients → fleet-management-frontend)
+KEYCLOAK_ID=fleet-management-frontend
+
+# Client Secret from Keycloak (Clients → fleet-management-frontend → Credentials)
+# IMPORTANT: Replace this with the actual secret from Keycloak!
+KEYCLOAK_SECRET=REPLACE_WITH_ACTUAL_CLIENT_SECRET_FROM_KEYCLOAK
+
+# Keycloak Issuer URL (realm endpoint)
+KEYCLOAK_ISSUER=http://localhost:8080/realms/fleet-management
+
+# ============================================================================
+# NextAuth Configuration
+# ============================================================================
+# URL where your Next.js app is running
+NEXTAUTH_URL=http://localhost:3000
+
+# NextAuth Secret - MUST BE RANDOM!
+# Generate using: openssl rand -base64 32
+# Or PowerShell: -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 32 | % {[char]$_})
+NEXTAUTH_SECRET=REPLACE_WITH_RANDOM_32_CHARACTER_STRING
+
+# ============================================================================
+# Backend Service URLs (Public - available to browser)
+# ============================================================================
+NEXT_PUBLIC_VEHICLE_SERVICE_URL=http://localhost:5000
+NEXT_PUBLIC_DRIVER_SERVICE_URL=http://localhost:6001
+NEXT_PUBLIC_MAINTENANCE_SERVICE_URL=http://localhost:5001
+
+
+STEPS TO CONFIGURE:
+-------------------
+
+1. CREATE KEYCLOAK CLIENT (if not done yet):
+   - Open: http://localhost:8080
+   - Login: admin / admin
+   - Go to: Clients → Create Client
+   - Client ID: fleet-management-frontend
+   - Client authentication: ON
+   - Save
+
+2. GET CLIENT SECRET:
+   - In Keycloak: Clients → fleet-management-frontend
+   - Go to: Credentials tab
+   - Copy the "Client Secret" value
+   - Paste it as KEYCLOAK_SECRET in .env.local
+
+3. GENERATE NEXTAUTH_SECRET:
+   
+   Option A - Using OpenSSL:
+   openssl rand -base64 32
+   
+   Option B - Using PowerShell:
+   -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 32 | % {[char]$_})
+   
+   Option C - Online Generator:
+   Visit: https://generate-secret.vercel.app/32
+   
+   Copy the generated string and paste as NEXTAUTH_SECRET
+
+4. VERIFY BACKEND URLS:
+   Ensure these match your running services:
+   - Vehicle Service: Check if running on port 5000
+   - Driver Service: Check if running on port 6001
+   - Maintenance Service: Check if running on port 5001
+
+5. SAVE THE FILE:
+   Make sure the file is named exactly: .env.local
+   Location: fleet-management-app/.env.local
+
+6. RESTART DEVELOPMENT SERVER:
+   cd fleet-management-app
+   npm run dev
+
+
+EXAMPLE .env.local FILE (with fake values):
+--------------------------------------------
+
+KEYCLOAK_ID=fleet-management-frontend
+KEYCLOAK_SECRET=x1y2z3a4b5c6d7e8f9g0h1i2j3k4l5m6
+KEYCLOAK_ISSUER=http://localhost:8080/realms/fleet-management
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=dkf93jfks03jfks93jfks93jfks93jf9
+NEXT_PUBLIC_VEHICLE_SERVICE_URL=http://localhost:5000
+NEXT_PUBLIC_DRIVER_SERVICE_URL=http://localhost:6001
+NEXT_PUBLIC_MAINTENANCE_SERVICE_URL=http://localhost:5001
+
+
+TROUBLESHOOTING:
+----------------
+
+Issue: "Environment variable not found"
+→ Make sure file is named .env.local (not .env.local.txt)
+→ Restart the dev server after creating the file
+
+Issue: "Client authentication failed"
+→ KEYCLOAK_SECRET doesn't match Keycloak
+→ Copy the secret again from Keycloak → Credentials tab
+
+Issue: "Invalid client secret"
+→ No spaces before/after the secret value
+→ Copy the entire secret string
+
+Issue: NEXTAUTH_SECRET too short
+→ Must be at least 32 characters
+→ Generate a new random string
+
+Issue: Can't find .env.local file
+→ It might be hidden (starts with .)
+→ Enable "Show hidden files" in your file explorer
+→ Or create it from terminal: touch .env.local
+
+
+SECURITY NOTES:
+---------------
+
+⚠️  NEVER commit .env.local to Git!
+⚠️  Don't share your KEYCLOAK_SECRET publicly
+⚠️  Use different secrets for production
+⚠️  Rotate secrets regularly in production
+⚠️  The .env.local file is already in .gitignore
+
+================================================================================
+

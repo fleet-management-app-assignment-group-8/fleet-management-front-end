@@ -1,0 +1,233 @@
+================================================================================
+KEYCLOAK INTEGRATION SETUP GUIDE
+Fleet Management System
+================================================================================
+
+This guide will help you complete the Keycloak integration for the Fleet 
+Management System.
+
+================================================================================
+STEP 1: CREATE KEYCLOAK CLIENT
+================================================================================
+
+1. Open Keycloak Admin Console: http://localhost:8080
+   Login: admin / admin
+
+2. Select the 'fleet-management' realm (top-left dropdown)
+
+3. Go to: Clients → Create Client
+
+4. Fill in the General Settings:
+   - Client type: OpenID Connect
+   - Client ID: fleet-management-frontend
+   - Name: Fleet Management App
+   - Description: Frontend client for the Fleet Management System
+   
+   Click "Next"
+
+5. Capability Config:
+   - Client authentication: ON (this makes it Confidential)
+   - Authorization: OFF
+   - Authentication flow:
+     ✓ Standard flow (checked)
+     ✓ Direct access grants (checked)
+     ☐ Implicit flow (unchecked)
+     ☐ Service accounts roles (unchecked)
+   
+   Click "Next"
+
+6. Login Settings:
+   - Root URL: http://localhost:3000
+   - Home URL: http://localhost:3000
+   - Valid redirect URIs: http://localhost:3000/api/auth/callback/keycloak
+   - Valid post logout redirect URIs: http://localhost:3000
+   - Web origins: http://localhost:3000
+   
+   Click "Save"
+
+7. After saving, go to the "Credentials" tab
+   - Copy the "Client Secret" value
+   - You will need this in Step 3
+
+================================================================================
+STEP 2: CREATE REALM ROLES
+================================================================================
+
+1. In Keycloak Admin Console, go to: Realm Roles
+
+2. Click "Create Role"
+   - Role name: fleet-admin
+   - Description: Administrator with full access to the fleet system
+   Click "Save"
+
+3. Click "Create Role" again
+   - Role name: fleet-employee
+   - Description: Employee with limited access to the fleet system
+   Click "Save"
+
+================================================================================
+STEP 3: CREATE TEST USERS
+================================================================================
+
+1. Go to: Users → Add User
+
+2. Create Admin User:
+   - Username: admin
+   - Email: admin@fleet.com
+   - First name: Admin
+   - Last name: User
+   - Email verified: ON
+   Click "Create"
+   
+   Then in the user details:
+   - Go to "Credentials" tab
+   - Click "Set password"
+   - Password: admin123
+   - Temporary: OFF
+   - Click "Save"
+   
+   - Go to "Role mapping" tab
+   - Click "Assign role"
+   - Select "fleet-admin"
+   - Click "Assign"
+
+3. Create Employee User:
+   - Username: employee
+   - Email: employee@fleet.com
+   - First name: Employee
+   - Last name: User
+   - Email verified: ON
+   Click "Create"
+   
+   Then in the user details:
+   - Go to "Credentials" tab
+   - Click "Set password"
+   - Password: employee123
+   - Temporary: OFF
+   - Click "Save"
+   
+   - Go to "Role mapping" tab
+   - Click "Assign role"
+   - Select "fleet-employee"
+   - Click "Assign"
+
+================================================================================
+STEP 4: CONFIGURE FRONTEND ENVIRONMENT
+================================================================================
+
+1. Navigate to: fleet-management-app/
+
+2. Create a file named: .env.local
+
+3. Add the following content (replace YOUR_CLIENT_SECRET with the secret from Step 1.7):
+
+KEYCLOAK_ID=fleet-management-frontend
+KEYCLOAK_SECRET=YOUR_CLIENT_SECRET_HERE
+KEYCLOAK_ISSUER=http://localhost:8080/realms/fleet-management
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=please-change-this-to-a-random-32-character-string
+NEXT_PUBLIC_VEHICLE_SERVICE_URL=http://localhost:5000
+NEXT_PUBLIC_DRIVER_SERVICE_URL=http://localhost:6001
+NEXT_PUBLIC_MAINTENANCE_SERVICE_URL=http://localhost:5001
+
+4. Generate a random secret for NEXTAUTH_SECRET:
+   You can use: openssl rand -base64 32
+   Or any random 32+ character string
+
+================================================================================
+STEP 5: CONFIGURE BACKEND SERVICES
+================================================================================
+
+All backend services are already configured to use:
+- Realm: fleet-management
+- Issuer: http://localhost:8080/realms/fleet-management
+
+No changes needed for backend services!
+
+================================================================================
+STEP 6: START SERVICES AND TEST
+================================================================================
+
+1. Ensure all services are running:
+   - Keycloak: http://localhost:8080
+   - Vehicle Service: http://localhost:5000
+   - Driver Service: http://localhost:6001
+   - Maintenance Service: http://localhost:5001
+   - Frontend: http://localhost:3000
+
+2. Start the Frontend:
+   cd fleet-management-app
+   npm run dev
+
+3. Test Authentication:
+   - Open browser: http://localhost:3000
+   - You should see the login page
+   - Click "Sign In with Keycloak"
+   - You will be redirected to Keycloak
+   - Login with: admin / admin123 or employee / employee123
+   - You should be redirected back to the dashboard
+
+4. Test API Calls:
+   - Once logged in, API calls to backend services will include JWT token
+   - Backend services will validate the token with Keycloak
+   - Check browser console for any errors
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Issue: "Invalid redirect URI"
+Solution: Make sure the redirect URI in Keycloak exactly matches:
+         http://localhost:3000/api/auth/callback/keycloak
+
+Issue: "CORS error"
+Solution: Add http://localhost:3000 to Web origins in Keycloak client
+
+Issue: Backend returns 401 Unauthorized
+Solution: Check that:
+         - Keycloak is running
+         - Realm name is 'fleet-management'
+         - Token is being sent in Authorization header
+
+Issue: "Client secret is invalid"
+Solution: Copy the client secret again from Keycloak → Clients → 
+         fleet-management-frontend → Credentials tab
+
+Issue: NextAuth error
+Solution: Make sure NEXTAUTH_SECRET is set in .env.local
+
+================================================================================
+TESTING CHECKLIST
+================================================================================
+
+☐ Can navigate to login page
+☐ Clicking login redirects to Keycloak
+☐ Can login with admin credentials
+☐ Gets redirected back to dashboard
+☐ User info is displayed correctly
+☐ Can logout successfully
+☐ Can login with employee credentials
+☐ API calls to backend include JWT token
+☐ Backend validates token successfully
+
+================================================================================
+SECURITY NOTES
+================================================================================
+
+1. NEVER commit .env.local to Git (already in .gitignore)
+2. Change NEXTAUTH_SECRET in production
+3. Use HTTPS in production (set KEYCLOAK_REQUIRE_HTTPS=true)
+4. Set proper CORS origins in production
+5. Rotate client secrets regularly
+6. Review Keycloak security settings before production deployment
+
+================================================================================
+ADDITIONAL RESOURCES
+================================================================================
+
+- Keycloak Documentation: https://www.keycloak.org/documentation
+- NextAuth.js Docs: https://next-auth.js.org/
+- Backend Service Docs: See respective service README files
+
+================================================================================
+

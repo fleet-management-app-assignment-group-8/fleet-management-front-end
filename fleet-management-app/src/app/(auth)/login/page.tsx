@@ -16,12 +16,11 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const handleLogin = async (email: string, password: string, role: 'admin' | 'employee') => {
+  const handleLogin = async () => {
     try {
-      await login(email, password, role);
+      await login();
     } catch (error) {
       console.error('Login error:', error);
-      // Handle error (show message to user, etc.)
     }
   };
 
