@@ -32,6 +32,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    // Check for refresh token error
+    if (session?.error === "RefreshAccessTokenError") {
+      signIn("keycloak"); // Force re-authentication
+    }
+
     if (session?.user) {
       // Convert NextAuth session to our User type
       const mappedUser: User = {
@@ -44,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         status: 'active',
         lastLogin: new Date().toISOString(),
       };
+      
       setUser(mappedUser);
     } else {
       setUser(null);
@@ -58,13 +64,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Build Keycloak logout URL to end the Keycloak session
     const keycloakIssuer = process.env.NEXT_PUBLIC_KEYCLOAK_ISSUER || 'http://localhost:8080/realms/fleet-management-app';
     const keycloakLogoutUrl = `${keycloakIssuer}/protocol/openid-connect/logout`;
-    const redirectUri = `${window.location.origin}/login`;
+    // Use base URL instead of /login since it should be in Valid post logout redirect URIs
+    const redirectUri = window.location.origin;
     
     // First sign out from NextAuth
     await signOut({ redirect: false });
     
     // Then redirect to Keycloak logout endpoint
-    // This will end the Keycloak session and redirect back to our login page
+    // This will end the Keycloak session and redirect back to our home page
     window.location.href = `${keycloakLogoutUrl}?post_logout_redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${process.env.NEXT_PUBLIC_KEYCLOAK_ID || 'fleet-management-frontend'}`;
   };
 

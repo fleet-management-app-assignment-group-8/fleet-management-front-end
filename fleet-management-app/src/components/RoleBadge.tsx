@@ -17,10 +17,10 @@ export function RoleBadge({ role, className, showIcon = true }: RoleBadgeProps) 
       case 'admin':
       case 'fleet-admin':
         return {
-          label: 'Administrator',
-          variant: 'default' as const, // usually primary color (black/dark blue)
+          label: 'Admin',
+          variant: 'destructive' as const, // Use destructive variant for strong contrast
           icon: ShieldAlert,
-          className: 'bg-indigo-600 hover:bg-indigo-700'
+          className: '!bg-indigo-600 hover:!bg-indigo-700 !text-white !border-indigo-700'
         };
       case 'employee':
       case 'fleet-employee':
@@ -46,10 +46,10 @@ export function RoleBadge({ role, className, showIcon = true }: RoleBadgeProps) 
   return (
     <Badge 
       variant={config.variant} 
-      className={cn("gap-1.5 px-2 py-0.5 font-medium transition-colors", config.className, className)}
+      className={cn("gap-1.5 px-2 py-0.5 font-medium transition-colors !text-white", config.className, className)}
     >
-      {showIcon && <Icon className="h-3 w-3" />}
-      <span className="capitalize">{config.label}</span>
+      {showIcon && <Icon className="h-3 w-3 !text-white" />}
+      <span className="capitalize !text-white">{config.label}</span>
     </Badge>
   );
 }

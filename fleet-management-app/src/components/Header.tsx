@@ -27,6 +27,7 @@ interface HeaderProps {
 
 export function Header({ user, onLogout, onProfileClick }: HeaderProps) {
   const [notifications] = useState([
+    { id: 0, message: 'Notification feature is not implemented yet', time: 'N/A', unread: false },
     { id: 1, message: 'Vehicle VH-0123 maintenance due', time: '5m ago', unread: true },
     { id: 2, message: 'New driver registration: Sarah Wilson', time: '1h ago', unread: true },
     { id: 3, message: 'Fuel alert for VH-0456', time: '2h ago', unread: false },
