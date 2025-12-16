@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Keycloak
+  keycloak-db:
+    image: postgres:15-alpine
+    container_name: keycloak-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_secure_password}
+    volumes:
+      - keycloak_postgres_data:/var/lib/postgresql/data
+    networks:
+      - fleet-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Keycloak Authentication Server
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak
+    restart: unless-stopped
+    command: start-dev
+    environment:
+      # Admin credentials
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      
+      # Database configuration
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_secure_password}
+      
+      # Hostname configuration
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      
+      # HTTP configuration
+      KC_HTTP_ENABLED: true
+      KC_HTTP_PORT: 8080
+      
+      # Proxy configuration
+      KC_PROXY: edge
+      
+      # Health check
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      
+      # Logging
+      KC_LOG_LEVEL: INFO
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - fleet-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;grep 'HTTP/1.1 200 OK' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  # Fleet Management Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fleet-frontend
+    restart: unless-stopped
+    environment:
+      # Keycloak Configuration (internal Docker network)
+      KEYCLOAK_ID: ${KEYCLOAK_ID:-fleet-management-frontend}
+      KEYCLOAK_SECRET: ${KEYCLOAK_SECRET}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:-http://keycloak:8080/realms/fleet-management-app}
+      
+      # Public Keycloak URL (accessible from browser)
+      NEXT_PUBLIC_KEYCLOAK_ISSUER: ${NEXT_PUBLIC_KEYCLOAK_ISSUER:-http://localhost:8080/realms/fleet-management-app}
+      NEXT_PUBLIC_KEYCLOAK_ID: ${KEYCLOAK_ID:-fleet-management-frontend}
+      
+      # NextAuth Configuration
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      
+      # Backend Service URLs
+      NEXT_PUBLIC_VEHICLE_SERVICE_URL: ${NEXT_PUBLIC_VEHICLE_SERVICE_URL:-http://localhost:7001}
+      NEXT_PUBLIC_DRIVER_SERVICE_URL: ${NEXT_PUBLIC_DRIVER_SERVICE_URL:-http://localhost:6001}
+      NEXT_PUBLIC_MAINTENANCE_SERVICE_URL: ${NEXT_PUBLIC_MAINTENANCE_SERVICE_URL:-http://localhost:5001}
+      
+      # Node Environment
+      NODE_ENV: production
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      - fleet-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  fleet-network:
+    driver: bridge
+
+volumes:
+  keycloak_postgres_data:
+    driver: local
+  keycloak_data:
+    driver: local

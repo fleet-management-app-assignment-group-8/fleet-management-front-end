@@ -54,6 +54,9 @@ yarn-error.log*
 # !.env.example
 # !.env.template
 
+# Keycloak environment (contains secrets)
+.env.keycloak
+
 # ===================================
 # Vercel
 # ===================================
