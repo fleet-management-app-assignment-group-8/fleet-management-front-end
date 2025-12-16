@@ -117,16 +117,15 @@ STEP 4: CONFIGURE FRONTEND ENVIRONMENT
 
 1. Navigate to: fleet-management-app/
 
-2. Create a file named: .env.local
 
 3. Add the following content (replace YOUR_CLIENT_SECRET with the secret from Step 1.7):
 
 KEYCLOAK_ID=fleet-management-frontend
 KEYCLOAK_SECRET=YOUR_CLIENT_SECRET_HERE
-KEYCLOAK_ISSUER=http://localhost:8080/realms/fleet-management
+KEYCLOAK_ISSUER=http://localhost:8080/realms/fleet-management-app
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=please-change-this-to-a-random-32-character-string
-NEXT_PUBLIC_VEHICLE_SERVICE_URL=http://localhost:5000
+NEXT_PUBLIC_VEHICLE_SERVICE_URL=http://localhost:7001
 NEXT_PUBLIC_DRIVER_SERVICE_URL=http://localhost:6001
 NEXT_PUBLIC_MAINTENANCE_SERVICE_URL=http://localhost:5001
 
@@ -139,8 +138,8 @@ STEP 5: CONFIGURE BACKEND SERVICES
 ================================================================================
 
 All backend services are already configured to use:
-- Realm: fleet-management
-- Issuer: http://localhost:8080/realms/fleet-management
+- Realm: fleet-management-app
+- Issuer: http://localhost:8080/realms/fleet-management-app
 
 No changes needed for backend services!
 
@@ -150,7 +149,7 @@ STEP 6: START SERVICES AND TEST
 
 1. Ensure all services are running:
    - Keycloak: http://localhost:8080
-   - Vehicle Service: http://localhost:5000
+   - Vehicle Service: http://localhost:7001
    - Driver Service: http://localhost:6001
    - Maintenance Service: http://localhost:5001
    - Frontend: http://localhost:3000
@@ -186,7 +185,7 @@ Solution: Add http://localhost:3000 to Web origins in Keycloak client
 Issue: Backend returns 401 Unauthorized
 Solution: Check that:
          - Keycloak is running
-         - Realm name is 'fleet-management'
+         - Realm name is 'fleet-management-app'
          - Token is being sent in Authorization header
 
 Issue: "Client secret is invalid"
@@ -194,7 +193,6 @@ Solution: Copy the client secret again from Keycloak → Clients →
          fleet-management-frontend → Credentials tab
 
 Issue: NextAuth error
-Solution: Make sure NEXTAUTH_SECRET is set in .env.local
 
 ================================================================================
 TESTING CHECKLIST
@@ -214,7 +212,6 @@ TESTING CHECKLIST
 SECURITY NOTES
 ================================================================================
 
-1. NEVER commit .env.local to Git (already in .gitignore)
 2. Change NEXTAUTH_SECRET in production
 3. Use HTTPS in production (set KEYCLOAK_REQUIRE_HTTPS=true)
 4. Set proper CORS origins in production

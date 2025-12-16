@@ -82,7 +82,6 @@ When adding new features:
 
 1. Update relevant README sections
 2. Add inline comments for complex logic
-3. Document new environment variables in `.env.example`
 4. Update TypeScript interfaces and types
 5. Add JSDoc comments for utility functions
 

@@ -67,7 +67,6 @@ fleet-management-app/
 ├── docs/                        # Documentation
 │   └── AUTHENTICATION.md        # Auth integration guide
 ├── public/                      # Static assets
-├── .env.example                 # Environment variables template
 ├── README.AUTH.md               # Auth status & quick reference
 └── package.json
 ```
@@ -90,12 +89,6 @@ fleet-management-app/
 2. **Install dependencies**
    ```bash
    npm install
-   ```
-
-3. **Set up environment variables** (optional for development)
-   ```bash
-   cp .env.example .env.local
-   # Edit .env.local with your configuration
    ```
 
 4. **Run the development server**
