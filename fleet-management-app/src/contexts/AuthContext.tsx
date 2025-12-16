@@ -55,7 +55,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await signOut({ callbackUrl: '/login' });
+    // Build Keycloak logout URL to end the Keycloak session
+    const keycloakIssuer = process.env.NEXT_PUBLIC_KEYCLOAK_ISSUER || 'http://localhost:8080/realms/fleet-management-app';
+    const keycloakLogoutUrl = `${keycloakIssuer}/protocol/openid-connect/logout`;
+    const redirectUri = `${window.location.origin}/login`;
+    
+    // First sign out from NextAuth
+    await signOut({ redirect: false });
+    
+    // Then redirect to Keycloak logout endpoint
+    // This will end the Keycloak session and redirect back to our login page
+    window.location.href = `${keycloakLogoutUrl}?post_logout_redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${process.env.NEXT_PUBLIC_KEYCLOAK_ID || 'fleet-management-frontend'}`;
   };
 
   const updateUser = (updatedUser: User) => {
