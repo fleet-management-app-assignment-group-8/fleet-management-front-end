@@ -1,10 +1,12 @@
 // Performance optimization: Added useMemo for expensive filtering
 import React, { useState, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { 
   Search, 
   Plus, 
@@ -18,6 +20,7 @@ import {
 } from 'lucide-react';
 
 export function TripManagement() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -136,10 +139,24 @@ export function TripManagement() {
           <h2 className="text-2xl font-semibold">Trip Management ( ToDo )</h2>
           <p className="text-muted-foreground">Monitor and manage fleet trips and routes</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Schedule Trip
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0}>
+                <Button 
+                  className="gap-2"
+                  disabled={user?.role !== 'admin'}
+                >
+                  <Plus className="h-4 w-4" />
+                  Schedule Trip
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{user?.role !== 'admin' ? "Admin access required" : "Schedule new trip"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Filters */}
@@ -261,9 +278,24 @@ export function TripManagement() {
                   Trip Details
                 </Button>
                 {trip.status === 'scheduled' && (
-                  <Button variant="outline" size="sm">
-                    Edit Trip
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span tabIndex={0}>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            disabled={user?.role !== 'admin'}
+                          >
+                            Edit Trip
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{user?.role !== 'admin' ? "Admin access required" : "Edit trip"}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             </CardContent>

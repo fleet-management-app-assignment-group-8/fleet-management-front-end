@@ -1,6 +1,36 @@
 import { NextAuthOptions } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
 
+// Validate required environment variables
+const requiredEnvVars = {
+  KEYCLOAK_ID: process.env.KEYCLOAK_ID,
+  KEYCLOAK_SECRET: process.env.KEYCLOAK_SECRET,
+  KEYCLOAK_ISSUER: process.env.KEYCLOAK_ISSUER,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+};
+
+const missingVars = Object.entries(requiredEnvVars)
+  .filter(([_, value]) => !value)
+  .map(([key]) => key);
+
+if (missingVars.length > 0) {
+  const errorMessage = `
+╔════════════════════════════════════════════════════════════════╗
+║  ⚠️  AUTHENTICATION CONFIGURATION ERROR                         ║
+╚════════════════════════════════════════════════════════════════╝
+
+Missing required environment variables:
+${missingVars.map(v => `  ❌ ${v}`).join('\n')}
+
+To fix this:
+
+See KEYCLOAK_SETUP.txt for detailed setup instructions.
+`;
+  
+  throw new Error(errorMessage);
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     KeycloakProvider({
@@ -58,6 +88,64 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false, // Set to false for localhost
+      },
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+    pkceCodeVerifier: {
+      name: `next-auth.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+        maxAge: 900, // 15 minutes
+      },
+    },
+    state: {
+      name: `next-auth.state`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+        maxAge: 900, // 15 minutes
+      },
+    },
+    nonce: {
+      name: `next-auth.nonce`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: true, // Enable debug mode to see more detailed logs
 };
 

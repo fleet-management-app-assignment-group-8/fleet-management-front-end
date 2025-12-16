@@ -9,12 +9,14 @@
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Plus, MapPin, Fuel, Calendar, RefreshCw, AlertCircle, Edit, UserPlus } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 
@@ -31,6 +33,7 @@ export function VehicleManagement() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
   
   // Driver assignment state
   const [isAssignDriverDialogOpen, setIsAssignDriverDialogOpen] = useState(false);
@@ -266,10 +269,25 @@ export function VehicleManagement() {
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button className="gap-2" onClick={() => addDialog.openDialog()} disabled={isLoading}>
-            <Plus className="h-4 w-4" />
-            Add Vehicle
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0}>
+                  <Button 
+                    className="gap-2" 
+                    onClick={() => addDialog.openDialog()} 
+                    disabled={isLoading || user?.role !== 'admin'}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Vehicle
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{user?.role !== 'admin' ? "Admin access required" : "Add new vehicle"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -401,13 +419,25 @@ export function VehicleManagement() {
                 >
                   Assign Driver
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => handleEditClick(vehicle)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleEditClick(vehicle)}
+                          disabled={user?.role !== 'admin'}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{user?.role !== 'admin' ? "Admin access required" : "Edit vehicle"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </CardContent>
           </Card>

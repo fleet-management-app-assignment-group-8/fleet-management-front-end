@@ -172,6 +172,27 @@ STEP 6: START SERVICES AND TEST
    - Check browser console for any errors
 
 ================================================================================
+STEP 7: ENABLE USER REGISTRATION
+================================================================================
+
+To allow users to create their own accounts:
+
+1. In Keycloak Admin Console, go to: Realm Settings
+
+2. Select the "Login" tab
+
+3. Toggle "User registration" to ON
+   - Click "Save"
+
+4. (Optional) Set Default Role for new users:
+   - Go to "Realm roles"
+   - Click "Default roles" tab (top of the list)
+   - Select "fleet-employee" from the "Available roles" list
+   - Click "Add selected" (or move to Assigned)
+
+Now the Login screen will show a "Register" link automatically.
+
+================================================================================
 TROUBLESHOOTING
 ================================================================================
 

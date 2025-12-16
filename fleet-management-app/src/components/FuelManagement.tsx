@@ -1,5 +1,6 @@
 // Performance optimization: Added useMemo for expensive calculations
 import React, { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -28,6 +29,7 @@ import {
 import { Label } from "./ui/label";
 import { Slider } from "./ui/slider";
 import { Input } from "./ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface FuelVehicle {
   vehicleId: string;
@@ -41,6 +43,7 @@ interface FuelVehicle {
 }
 
 export function FuelManagement() {
+  const { user } = useAuth();
   const [fuelData, setFuelData] = useState<FuelVehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -249,14 +252,26 @@ export function FuelManagement() {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     {getStatusBadge(vehicle.fuelLevel)}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 w-8 p-0"
-                      onClick={() => handleEditClick(vehicle)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span tabIndex={0}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleEditClick(vehicle)}
+                              disabled={user?.role !== 'admin'}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{user?.role !== 'admin' ? "Admin access required" : "Update fuel level"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               </CardHeader>

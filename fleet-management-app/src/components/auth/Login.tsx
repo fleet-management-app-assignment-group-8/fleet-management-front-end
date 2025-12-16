@@ -3,6 +3,7 @@ import { Eye, EyeOff, Truck } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Separator } from '../ui/separator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -39,7 +40,7 @@ export function Login({ onLogin }: LoginProps) {
           </div>
           <CardTitle>Sign In</CardTitle>
           <CardDescription>
-            Sign in with your Keycloak account to access the fleet management dashboard
+            Sign in to access the fleet management dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -49,12 +50,26 @@ export function Login({ onLogin }: LoginProps) {
               className="w-full" 
               disabled={isLoading}
             >
-              {isLoading ? 'Redirecting...' : 'Sign In with Keycloak'}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
 
             <div className="text-xs text-center text-muted-foreground mt-4">
-              <p>Use your Keycloak credentials to sign in.</p>
-              <p className="mt-2">You will be redirected to the authentication server.</p>
+              <p>Use your company credentials to sign in.</p>
+              <p className="mt-2">Secure authentication provided by enterprise SSO.</p>
+            </div>
+
+            <Separator className="my-4" />
+            
+            <div className="text-center text-sm">
+              Don&apos;t have an account?{" "}
+              <Button 
+                variant="link" 
+                className="p-0 h-auto font-normal underline" 
+                onClick={handleKeycloakLogin}
+                disabled={isLoading}
+              >
+                Sign up
+              </Button>
             </div>
           </div>
         </CardContent>

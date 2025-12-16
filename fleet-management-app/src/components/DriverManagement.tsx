@@ -1,5 +1,6 @@
 // Performance optimization: Added useMemo and useCallback for expensive operations
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -8,6 +9,7 @@ import { Label } from './ui/label';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Loader } from './ui/loader';
 import { Alert, AlertDescription } from './ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +31,7 @@ import {
 
 export function DriverManagement() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -281,9 +284,14 @@ export function DriverManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Driver Management</h2>
-          <p className="text-muted-foreground">Manage your fleet drivers and assignments</p>
+          <p className="text-muted-foreground">          Manage your fleet drivers and assignments</p>
         </div>
-        <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
+        <Button 
+          className="gap-2" 
+          onClick={() => setIsAddDialogOpen(true)}
+          disabled={user?.role !== 'admin'}
+          title={user?.role !== 'admin' ? "Admin access required" : "Add new driver"}
+        >
           <Plus className="h-4 w-4" />
           Add Driver
         </Button>
@@ -329,10 +337,24 @@ export function DriverManagement() {
               {searchQuery ? 'Try adjusting your search criteria' : 'Get started by adding your first driver'}
             </p>
             {!searchQuery && (
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Driver
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span tabIndex={0}>
+                      <Button 
+                        onClick={() => setIsAddDialogOpen(true)}
+                        disabled={user?.role !== 'admin'}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Driver
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{user?.role !== 'admin' ? "Admin access required" : "Add new driver"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </CardContent>
         </Card>
@@ -355,14 +377,26 @@ export function DriverManagement() {
                   </div>
                 </div>
                 {getStatusBadge(driver.status || 'unavailable')}
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="h-8 w-8 ml-2"
-                  onClick={() => handleEditClick(driver)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 ml-2"
+                          onClick={() => handleEditClick(driver)}
+                          disabled={user?.role !== 'admin'}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{user?.role !== 'admin' ? "Admin access required" : "Edit driver"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

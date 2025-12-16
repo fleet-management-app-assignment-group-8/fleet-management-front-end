@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -8,6 +9,7 @@ import { Progress } from './ui/progress';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { 
   Select,
   SelectContent,
@@ -47,6 +49,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export function MaintenanceManagement() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [maintenanceItems, setMaintenanceItems] = useState<MaintenanceItem[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -498,9 +501,25 @@ export function MaintenanceManagement() {
                       <Button variant="outline" size="sm" onClick={() => openEditDialog(item)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(item.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span tabIndex={0}>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleDelete(item.id)}
+                                disabled={user?.role !== 'admin'}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{user?.role !== 'admin' ? "Admin access required" : "Delete maintenance item"}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                 </div>

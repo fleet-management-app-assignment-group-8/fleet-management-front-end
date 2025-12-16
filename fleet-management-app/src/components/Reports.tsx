@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { FileText, Download, Calendar, Filter, TrendingUp, Clock, DollarSign, Activity } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -23,8 +24,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { reportsService, type GeneratedReport } from '../services/api/reportsService';
 import { useToast } from '../hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 export function Reports() {
+  const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [recentReports, setRecentReports] = useState<GeneratedReport[]>([]);
@@ -233,7 +236,24 @@ export function Reports() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">Edit</Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span tabIndex={0}>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  disabled={user?.role !== 'admin'}
+                                >
+                                  Edit
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{user?.role !== 'admin' ? "Admin access required" : "Edit schedule"}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
                     </TableRow>
                   ))}
