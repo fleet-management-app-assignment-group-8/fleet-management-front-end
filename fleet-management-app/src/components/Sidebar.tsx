@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
+import { RoleBadge } from './RoleBadge';
 
 interface SidebarProps {
   activeSection?: string;
@@ -61,7 +62,10 @@ export function Sidebar({ activeSection, onSectionChange, userRole }: SidebarPro
     <div className="w-64 bg-card border-r border-border flex flex-col">
       <div className="p-6 border-b border-border">
         <h1 className="text-xl font-semibold text-foreground">FleetManager</h1>
-        <p className="text-sm text-muted-foreground">B2B Fleet Solutions</p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-sm text-muted-foreground">B2B Fleet Solutions</p>
+          <RoleBadge role={userRole} className="h-5 text-[10px] px-1.5" showIcon={false} />
+        </div>
       </div>
       
       <nav className="flex-1 p-4 space-y-2 overflow-auto">

@@ -3,6 +3,7 @@ import { Search, Bell, User, LogOut, Settings } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { RoleBadge } from './RoleBadge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,7 +93,9 @@ export function Header({ user, onLogout, onProfileClick }: HeaderProps) {
             </Avatar>
             <div className="text-left hidden md:block">
               <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+              <div className="flex justify-end mt-0.5">
+                <RoleBadge role={user.role} className="text-[10px] h-5 px-1.5" />
+              </div>
             </div>
           </Button>
         </DropdownMenuTrigger>
