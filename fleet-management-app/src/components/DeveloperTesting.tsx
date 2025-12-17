@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { CheckCircle, XCircle, Loader2, Server, Terminal } from 'lucide-react';
 import { API_CONFIG } from '@/services/api/baseApi';
+import { maintenanceService, driverService, vehicleService } from '@/services/api';
 
 type ServiceStatus = 'success' | 'error' | 'pending';
 type ServiceResult = { status: ServiceStatus; message: string };
@@ -25,21 +26,21 @@ export function DeveloperTesting() {
   const testMaintenanceService = async (): Promise<ServiceResult> => {
     try {
       const serviceUrl = API_CONFIG.MAINTENANCE_SERVICE_URL;
-      const baseUrl = `${serviceUrl}/api`;
       
-      // Test health endpoint
+      // Test health endpoint (public)
       const healthResponse = await fetch(`${serviceUrl}/health`);
       if (!healthResponse.ok) {
         throw new Error('Health check failed');
       }
 
-      // Test API endpoint
-      const apiResponse = await fetch(`${baseUrl}/maintenance?page=1&per_page=1`);
-      if (!apiResponse.ok) {
-        throw new Error(`API returned status ${apiResponse.status}`);
+      // Test API endpoint using Authenticated Service
+      const response = await maintenanceService.getAll({}, 1, 1);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'API request failed');
       }
 
-      const data = await apiResponse.json();
+      const data = response.data;
       
       return {
         status: 'success',
@@ -57,7 +58,7 @@ export function DeveloperTesting() {
     try {
       const serviceUrl = API_CONFIG.DRIVER_SERVICE_URL;
       
-      // Test health endpoint
+      // Test health endpoint (public)
       const healthResponse = await fetch(`${serviceUrl}/health`).catch(() => 
         fetch(`${serviceUrl}/`)
       );
@@ -66,14 +67,15 @@ export function DeveloperTesting() {
         throw new Error('Service not responding');
       }
 
-      // Test API endpoint - get drivers list
-      const apiResponse = await fetch(`${serviceUrl}/api/drivers/list`);
-      if (!apiResponse.ok) {
-        throw new Error(`API returned status ${apiResponse.status}`);
+      // Test API endpoint using Authenticated Service
+      const response = await driverService.getAll();
+      
+      if (!response.success) {
+        throw new Error(response.error || 'API request failed');
       }
 
-      const data = await apiResponse.json();
-      const driverCount = Array.isArray(data) ? data.length : (data.totalElements || data.content?.length || 0);
+      const data = response.data;
+      const driverCount = Array.isArray(data) ? data.length : 0;
       
       return {
         status: 'success',
@@ -91,20 +93,22 @@ export function DeveloperTesting() {
     try {
       const serviceUrl = API_CONFIG.VEHICLE_SERVICE_URL;
       
-      // Test health endpoint
+      // Test health endpoint (public)
       const healthResponse = await fetch(`${serviceUrl}/health`);
       if (!healthResponse.ok) {
         throw new Error('Health check failed');
       }
 
-      // Test API endpoint - get vehicles
-      const apiResponse = await fetch(`${serviceUrl}/api/vehicles?PageNumber=1&PageSize=1`);
-      if (!apiResponse.ok) {
-        throw new Error(`API returned status ${apiResponse.status}`);
+      // Test API endpoint using Authenticated Service
+      // Using getStatistics as it's a lightweight read operation
+      const response = await vehicleService.getStatistics();
+      
+      if (!response.success) {
+        throw new Error(response.error || 'API request failed');
       }
 
-      const data = await apiResponse.json();
-      const vehicleCount = data.totalCount || data.items?.length || 0;
+      const data = response.data;
+      const vehicleCount = data.TotalVehicles || data.totalVehicles || 0;
       
       return {
         status: 'success',
@@ -337,4 +341,3 @@ export function DeveloperTesting() {
     </div>
   );
 }
-
