@@ -82,10 +82,12 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, account, profile }) {
       // 1. Initial Sign In
       if (account) {
+        // Store tokens but don't pass full token to session
         token.accessToken = account.access_token;
-        token.idToken = account.id_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
+        // Don't store idToken to reduce session size
+        // token.idToken = account.id_token;
       
         // Add user role from Keycloak
         if (profile) {
@@ -150,14 +152,17 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       // Send properties to the client
+      // Only send accessToken - it's needed for API calls
       session.accessToken = token.accessToken as string;
       session.error = token.error as string;
       
+      // Minimize user data in session cookie
       session.user = {
         ...session.user,
         id: token.sub as string,
         role: token.role as 'admin' | 'employee',
-        roles: token.roles as string[],
+        // Don't include full roles array to save space
+        // roles: token.roles as string[],
       };
       
       return session;

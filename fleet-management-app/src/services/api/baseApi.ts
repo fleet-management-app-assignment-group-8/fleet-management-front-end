@@ -122,6 +122,11 @@ class BaseApi {
    */
   async patch<T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> {
     try {
+      console.log('PATCH Request:', {
+        url: `${this.baseUrl}${endpoint}`,
+        data: data
+      });
+      
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'PATCH',
         headers: this.defaultHeaders,
@@ -156,10 +161,25 @@ class BaseApi {
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData: errorData,
+        validationErrors: errorData.errors
+      });
+      
+      // Detailed error message including validation errors
+      let errorMessage = errorData.message || errorData.error || `HTTP Error: ${response.status}`;
+      if (errorData.errors) {
+        const validationDetails = JSON.stringify(errorData.errors, null, 2);
+        errorMessage += `\n\nValidation Errors:\n${validationDetails}`;
+        console.error('Validation Error Details:', errorData.errors);
+      }
+      
       return {
         data: null as T,
         success: false,
-        error: errorData.message || errorData.error || `HTTP Error: ${response.status}`
+        error: errorMessage
       };
     }
 

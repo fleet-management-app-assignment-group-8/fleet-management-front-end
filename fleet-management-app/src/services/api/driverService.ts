@@ -60,7 +60,11 @@ class DriverService {
         expiryDate: driverData.expiryDate || driverData.licenseExpiry
       };
       
+      console.log('Sending driver creation payload:', backendData);
+      
       const response = await driverApi.post<{ message: string }>(this.endpoint, backendData);
+      
+      console.log('Received driver creation response:', response);
       
       // Map the object response back to a string for the frontend
       return {

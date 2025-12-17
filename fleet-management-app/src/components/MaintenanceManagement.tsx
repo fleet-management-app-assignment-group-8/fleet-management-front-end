@@ -179,21 +179,24 @@ export function MaintenanceManagement() {
     if (!selectedItem) return;
 
     try {
-      const updateData: MaintenanceUpdateData = {
-        type: formData.type,
-        description: formData.description,
-        status: formData.status,
-        priority: formData.priority,
-        // Only include date if it exists, otherwise it might fail validation if empty
-        due_date: formData.due_date, 
-        current_mileage: formData.current_mileage,
-        due_mileage: formData.due_mileage,
-        estimated_cost: formData.estimated_cost,
-        assigned_to: formData.assigned_to,
-        assigned_technician: formData.assigned_technician,
-        notes: formData.notes,
-        parts_needed: formData.parts_needed,
-      };
+      // Only include fields that have actual values
+      const updateData: MaintenanceUpdateData = {};
+      
+      if (formData.type) updateData.type = formData.type;
+      if (formData.description) updateData.description = formData.description;
+      if (formData.status) updateData.status = formData.status;
+      if (formData.priority) updateData.priority = formData.priority;
+      if (formData.due_date) updateData.due_date = formData.due_date;
+      if (formData.current_mileage !== undefined) updateData.current_mileage = formData.current_mileage;
+      if (formData.due_mileage !== undefined) updateData.due_mileage = formData.due_mileage;
+      if (formData.estimated_cost !== undefined) updateData.estimated_cost = formData.estimated_cost;
+      if (formData.assigned_to) updateData.assigned_to = formData.assigned_to;
+      if (formData.assigned_technician) updateData.assigned_technician = formData.assigned_technician;
+      if (formData.notes) updateData.notes = formData.notes;
+      if (formData.parts_needed !== undefined) updateData.parts_needed = formData.parts_needed;
+
+      console.log('Update data being sent:', updateData);
+      console.log('Form data:', formData);
 
       const response = await maintenanceService.update(selectedItem.id, updateData);
       

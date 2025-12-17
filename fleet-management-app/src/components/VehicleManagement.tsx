@@ -327,7 +327,7 @@ export function VehicleManagement() {
         </div>
       ) : filteredVehicles.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 text-center">
-          <p className="text-muted-foreground text-lg">No vehicles found</p>
+          <p className="text-muted-foreground text-lg">No vehicles found yet, please wait </p>
           <p className="text-muted-foreground text-sm mt-2">
             {searchQuery || statusFilter !== 'all' 
               ? 'Try adjusting your filters' 
