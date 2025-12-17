@@ -13,6 +13,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { User } from '@/types';
+import { baseApi, vehicleApi, maintenanceApi, driverApi } from '@/services/api/baseApi';
 
 interface AuthContextType {
   user: User | null;
@@ -35,6 +36,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for refresh token error
     if (session?.error === "RefreshAccessTokenError") {
       signIn("keycloak"); // Force re-authentication
+    }
+
+    if (session?.accessToken) {
+      const token = session.accessToken;
+      baseApi.setAuthToken(token);
+      vehicleApi.setAuthToken(token);
+      maintenanceApi.setAuthToken(token);
+      driverApi.setAuthToken(token);
+    } else {
+      baseApi.clearAuthToken();
+      vehicleApi.clearAuthToken();
+      maintenanceApi.clearAuthToken();
+      driverApi.clearAuthToken();
     }
 
     if (session?.user) {
