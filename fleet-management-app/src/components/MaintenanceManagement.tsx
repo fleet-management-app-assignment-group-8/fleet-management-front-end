@@ -184,7 +184,8 @@ export function MaintenanceManagement() {
         description: formData.description,
         status: formData.status,
         priority: formData.priority,
-        due_date: formData.due_date,
+        // Only include date if it exists, otherwise it might fail validation if empty
+        due_date: formData.due_date, 
         current_mileage: formData.current_mileage,
         due_mileage: formData.due_mileage,
         estimated_cost: formData.estimated_cost,
@@ -330,6 +331,11 @@ export function MaintenanceManagement() {
   const upcomingCount = summary?.overdue_count + summary?.due_soon_count || 0;
   const inProgressCount = summary?.by_status?.in_progress || 0;
   const totalCost = summary?.total_estimated_cost || 0;
+
+  const getVehicleDisplay = (vehicleId: string) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId || v.license === vehicleId);
+    return vehicle ? `${vehicle.license} • ${vehicle.make} ${vehicle.model}` : vehicleId;
+  };
 
   return (
     <div className="p-6 space-y-6 overflow-auto h-full">
@@ -482,7 +488,7 @@ export function MaintenanceManagement() {
                     <div>
                       <CardTitle className="text-lg">{item.type}</CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        {item.vehicle_id} • {item.id}
+                        {getVehicleDisplay(item.vehicle_id)} • {item.id}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -681,22 +687,31 @@ function MaintenanceForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="vehicle_id">Vehicle *</Label>
-          <Select 
-            value={formData.vehicle_id} 
-            onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}
-            disabled={isEdit}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Vehicle" />
-            </SelectTrigger>
-            <SelectContent>
-              {vehicles.map((vehicle) => (
-                <SelectItem key={vehicle.id} value={vehicle.id}>
-                  {vehicle.make} {vehicle.model} ({vehicle.licensePlate})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isEdit ? (
+            <Input
+              value={(() => {
+                const v = vehicles.find(v => v.id === formData.vehicle_id || v.license === formData.vehicle_id);
+                return v ? `${v.make} ${v.model} (${v.license})` : formData.vehicle_id;
+              })()}
+              disabled
+            />
+          ) : (
+            <Select 
+              value={formData.vehicle_id} 
+              onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Vehicle" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicles.map((vehicle) => (
+                  <SelectItem key={vehicle.id} value={vehicle.id}>
+                    {vehicle.make} {vehicle.model} ({vehicle.license})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
