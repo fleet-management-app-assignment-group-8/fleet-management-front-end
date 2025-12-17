@@ -1,0 +1,47 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: fleet-frontend-gateway
+  namespace: fleet-management
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "fleet.example.com"  # Replace with your actual domain
+    - "*"  # Allow all hosts for development (remove in production)
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: fleet-frontend-tls  # K8s secret with TLS cert
+    hosts:
+    - "fleet.example.com"  # Replace with your actual domain
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: fleet-frontend-gateway
+  namespace: fleet-management
+spec:
+  hosts:
+  - "fleet.example.com"  # Replace with your actual domain
+  - "*"  # Allow all hosts for development (remove in production)
+  gateways:
+  - fleet-frontend-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: fleet-frontend
+        port:
+          number: 3000
+

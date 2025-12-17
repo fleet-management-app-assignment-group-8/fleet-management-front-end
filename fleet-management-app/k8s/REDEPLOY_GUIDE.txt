@@ -1,0 +1,269 @@
+===============================
+REDEPLOY SCRIPT USAGE GUIDE
+===============================
+
+OVERVIEW
+--------
+The redeploy-service.sh script safely redeploys the fleet-frontend service
+in your Kubernetes cluster. It handles cleanup, configuration updates, and
+verification automatically.
+
+QUICK START
+-----------
+# Basic redeploy (pulls latest image, keeps secrets)
+./redeploy-service.sh
+
+# Redeploy including secrets
+./redeploy-service.sh --with-secrets
+
+# Deploy specific version
+./redeploy-service.sh --image harinejan/fleet-frontend:v1.0.1
+
+# Dry run (see what would happen)
+./redeploy-service.sh --dry-run
+
+USAGE
+-----
+./redeploy-service.sh [options]
+
+OPTIONS
+-------
+--image <image:tag>     Deploy specific image version
+                        Default: Uses harinejan/fleet-frontend:latest
+                        Example: --image harinejan/fleet-frontend:abc123
+
+--namespace <ns>        Target namespace (default: fleet-management)
+                        Example: --namespace production
+
+--with-secrets          Also redeploy secrets (default: keeps existing secrets)
+                        Use when you need to update secrets
+
+--force                 Force delete pods immediately
+                        Use with caution
+
+--dry-run               Show what would be done without executing
+                        Safe way to test the script
+
+-h, --help             Show help message
+
+COMMON SCENARIOS
+----------------
+
+1. Quick Redeploy After Code Changes (Most Common)
+   # After running docker-build.sh and docker-publish.sh
+   # This pulls the latest image and keeps existing secrets
+   ./redeploy-service.sh
+
+2. Deploy Specific Version
+   # Use when you need a specific git commit or tag
+   ./redeploy-service.sh --image harinejan/fleet-frontend:a1b2c3d
+
+3. Update Configuration Only
+   # Edit configmap.yaml or other configs, then:
+   ./redeploy-service.sh
+
+4. Full Clean Redeploy (Including Secrets)
+   # Use when you need to update secrets
+   ./redeploy-service.sh --with-secrets
+
+5. Test Before Applying
+   # See what would happen without making changes
+   ./redeploy-service.sh --dry-run
+
+6. Deploy to Different Namespace
+   ./redeploy-service.sh --namespace staging
+
+WHAT THE SCRIPT DOES
+--------------------
+1. Backs up current deployment to /tmp/fleet-frontend-backup-*.yaml
+2. Deletes existing resources:
+   - Deployment (and pods)
+   - Service
+   - HPA
+   - Istio VirtualService
+   - Istio DestinationRule
+   - Istio Gateway
+   - ConfigMap
+   - Secrets (unless --skip-secrets)
+3. Waits for pods to terminate
+4. Applies updated configurations
+5. Waits for new pods to be ready
+6. Verifies deployment health
+7. Shows status and useful commands
+
+TYPICAL WORKFLOW
+----------------
+# On your local machine or CI/CD:
+1. Make changes to code
+2. Build new image:
+   ./docker-build.sh
+3. Push to Docker Hub:
+   ./docker-publish.sh
+   # This pushes both :latest and :<git-commit> tags
+
+# On your Kubernetes cluster (or via kubectl):
+4. SSH to cluster or ensure kubectl is configured
+5. Navigate to k8s directory:
+   cd fleet-management-app/k8s
+6. Redeploy (automatically pulls latest):
+   ./redeploy-service.sh
+7. Verify deployment is healthy
+
+# Alternative: Deploy specific version
+   ./redeploy-service.sh --image harinejan/fleet-frontend:a1b2c3d
+
+BEFORE FIRST USE
+-----------------
+# Make script executable (Linux/Mac/Cloud)
+chmod +x redeploy-service.sh
+
+# Ensure kubectl is configured
+kubectl config current-context
+
+# Verify you can access the cluster
+kubectl get nodes
+
+SAFETY FEATURES
+---------------
+- Confirmation prompt before making changes
+- Backup of current deployment
+- Dry-run mode for testing
+- Waits for graceful pod termination
+- Verifies new deployment is healthy
+- Shows detailed status and logs
+- Exits on errors (set -e)
+
+TROUBLESHOOTING
+---------------
+
+1. Script fails with "kubectl not found"
+   Solution: Install kubectl or ensure it's in PATH
+
+2. "Namespace does not exist"
+   Solution: Script will create it automatically
+   Or manually: kubectl apply -f namespace.yaml
+
+3. Pods not becoming ready
+   - Script will show pod status and events
+   - Check logs: kubectl logs -f deployment/fleet-frontend -n fleet-management
+   - Describe pod: kubectl describe pod <pod-name> -n fleet-management
+
+4. Image pull errors
+   - Verify image exists: docker pull harinejan/fleet-frontend:tag
+   - Check if image is public or if imagePullSecrets are configured
+   - Verify image name and tag are correct
+
+5. Secrets not found after redeploy
+   - Secrets are kept by default (unless you used --with-secrets)
+   - If secrets were deleted, recreate manually or update secret.yaml
+   - Or run: kubectl create secret generic fleet-frontend-secrets ...
+
+6. Service not accessible
+   - Check Istio gateway: kubectl get gateway -n fleet-management
+   - Check external IP: kubectl get svc istio-ingressgateway -n istio-system
+   - Verify DNS/domain configuration
+
+MONITORING AFTER REDEPLOY
+--------------------------
+# Watch pods come up
+kubectl get pods -n fleet-management -w
+
+# Follow logs
+kubectl logs -f deployment/fleet-frontend -n fleet-management
+
+# Check all resources
+kubectl get all -n fleet-management
+
+# Check Istio resources
+kubectl get virtualservices,destinationrules,gateways -n fleet-management
+
+# View recent events
+kubectl get events -n fleet-management --sort-by='.lastTimestamp'
+
+# Check HPA status
+kubectl get hpa -n fleet-management
+
+ROLLBACK
+--------
+If something goes wrong, you can rollback:
+
+# Using kubectl rollout
+kubectl rollout undo deployment/fleet-frontend -n fleet-management
+
+# Or restore from backup
+kubectl apply -f /tmp/fleet-frontend-backup-YYYYMMDD-HHMMSS.yaml
+
+# Or redeploy previous version
+./redeploy-service.sh --image harinejan/fleet-frontend:previous-tag
+
+AUTOMATION / CI/CD
+------------------
+You can use this script in CI/CD pipelines:
+
+# Example GitHub Actions (uses latest)
+- name: Redeploy to Kubernetes
+  run: |
+    cd k8s
+    yes | ./redeploy-service.sh
+
+# Example GitHub Actions (specific version)
+- name: Redeploy to Kubernetes
+  run: |
+    cd k8s
+    yes | ./redeploy-service.sh --image harinejan/fleet-frontend:${{ github.sha }}
+
+# Example GitLab CI
+deploy:
+  script:
+    - cd k8s
+    - yes | ./redeploy-service.sh
+
+# For automation, skip the confirmation prompt with 'yes' command:
+yes | ./redeploy-service.sh
+
+BEST PRACTICES
+--------------
+1. Always use specific image tags (not 'latest') in production
+2. Use --dry-run first to verify changes
+3. Use --skip-secrets for normal redeployments
+4. Monitor logs after deployment
+5. Keep backups of working configurations
+6. Test in staging before production
+7. Use git tags for releases (v1.0.0, v1.0.1, etc.)
+8. Document any manual changes made to the cluster
+
+SECURITY NOTES
+--------------
+- Secrets are stored in secret.yaml (should not be in git)
+- Use Kubernetes secrets or external secret management
+- Ensure RBAC is properly configured
+- Use least-privilege service accounts
+- Rotate secrets regularly
+- Use Istio mTLS for service-to-service communication
+
+EXAMPLES
+--------
+# Example 1: Deploy after code change (MOST COMMON)
+git add .
+git commit -m "Fix: Update authentication logic"
+./docker-build.sh
+./docker-publish.sh
+# Automatically pushes :latest tag
+ssh your-cluster
+cd fleet-management-app/k8s
+./redeploy-service.sh  # Pulls latest automatically
+
+# Example 2: Deploy specific version
+./redeploy-service.sh --image harinejan/fleet-frontend:a1b2c3d
+
+# Example 3: Update only ConfigMap
+vim configmap.yaml  # Make changes
+./redeploy-service.sh
+
+# Example 4: Update secrets
+vim secret.yaml  # Update secrets
+./redeploy-service.sh --with-secrets
+
+# Example 5: Test deployment
+./redeploy-service.sh --dry-run
+

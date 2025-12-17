@@ -1,0 +1,192 @@
+===============================
+DOCKER BUILD & PUBLISH GUIDE
+===============================
+
+PREREQUISITES
+-------------
+1. Docker Desktop installed and running
+2. Docker Hub account created (https://hub.docker.com/signup)
+3. Git installed and repository initialized
+4. Logged in to Docker Hub: docker login
+
+QUICK START (Windows)
+---------------------
+1. Set your Docker Hub username:
+   set DOCKER_HUB_USERNAME=yourusername
+
+2. Build the image:
+   docker-build.bat
+
+3. Test the image locally:
+   docker run -p 3000:3000 yourusername/fleet-frontend:latest
+
+4. Publish to Docker Hub:
+   docker-publish.bat
+
+QUICK START (Linux/Mac)
+-----------------------
+1. Make scripts executable:
+   chmod +x docker-build.sh docker-publish.sh
+
+2. Set your Docker Hub username:
+   export DOCKER_HUB_USERNAME=yourusername
+
+3. Build the image:
+   ./docker-build.sh
+
+4. Test the image locally:
+   docker run -p 3000:3000 yourusername/fleet-frontend:latest
+
+5. Publish to Docker Hub:
+   ./docker-publish.sh
+
+ENVIRONMENT VARIABLES
+---------------------
+Set these before building to customize the build:
+
+Windows:
+  set DOCKER_HUB_USERNAME=yourusername
+  set NEXT_PUBLIC_VEHICLE_SERVICE_URL=http://vehicle-service:8080
+  set NEXT_PUBLIC_MAINTENANCE_SERVICE_URL=http://maintenance-service:5001
+  set NEXT_PUBLIC_DRIVER_SERVICE_URL=http://driver-service:8080
+  set NEXT_PUBLIC_API_URL=http://localhost:3000/api
+
+Linux/Mac:
+  export DOCKER_HUB_USERNAME=yourusername
+  export NEXT_PUBLIC_VEHICLE_SERVICE_URL=http://vehicle-service:8080
+  export NEXT_PUBLIC_MAINTENANCE_SERVICE_URL=http://maintenance-service:5001
+  export NEXT_PUBLIC_DRIVER_SERVICE_URL=http://driver-service:8080
+  export NEXT_PUBLIC_API_URL=http://localhost:3000/api
+
+IMAGE TAGGING STRATEGY
+----------------------
+The scripts automatically create multiple tags:
+
+1. latest - Always points to the most recent build
+   Example: yourusername/fleet-frontend:latest
+
+2. Git commit hash - Specific version tracking
+   Example: yourusername/fleet-frontend:a1b2c3d
+
+3. Git tag - If you've tagged a release
+   Example: yourusername/fleet-frontend:v1.0.0
+
+4. Branch name - For feature branches
+   Example: yourusername/fleet-frontend:feature-auth
+
+CREATING GIT TAGS
+-----------------
+To create a versioned release:
+
+  git tag -a v1.0.0 -m "Release version 1.0.0"
+  git push origin v1.0.0
+
+Then build and publish:
+  docker-build.bat (or .sh)
+  docker-publish.bat (or .sh)
+
+This will create an image tagged as: yourusername/fleet-frontend:v1.0.0
+
+TESTING LOCALLY
+---------------
+After building, test the image:
+
+  docker run -p 3000:3000 ^
+    -e NEXTAUTH_URL=http://localhost:3000 ^
+    -e NEXTAUTH_SECRET=your-secret ^
+    -e KEYCLOAK_ID=fleet-management-client ^
+    -e KEYCLOAK_SECRET=your-keycloak-secret ^
+    -e KEYCLOAK_ISSUER=http://localhost:8080/realms/fleet-management ^
+    yourusername/fleet-frontend:latest
+
+Access at: http://localhost:3000
+
+KUBERNETES DEPLOYMENT
+---------------------
+After publishing to Docker Hub:
+
+1. Update k8s/kustomization.yaml:
+   images:
+     - name: fleet-frontend
+       newName: yourusername/fleet-frontend
+       newTag: a1b2c3d  # Use specific commit or tag
+
+2. Deploy to Kubernetes:
+   kubectl apply -k k8s/
+
+TROUBLESHOOTING
+---------------
+1. "docker login" fails:
+   - Make sure Docker Desktop is running
+   - Check your Docker Hub credentials
+   - Try: docker logout && docker login
+
+2. Build fails with "git not found":
+   - Install Git: https://git-scm.com/downloads
+   - Make sure git is in your PATH
+
+3. Push fails with "denied: requested access to the resource is denied":
+   - Make sure you're logged in: docker login
+   - Check DOCKER_HUB_USERNAME matches your Docker Hub username
+   - Verify the repository exists on Docker Hub
+
+4. Image size too large:
+   - Check .dockerignore is present
+   - Remove unnecessary files from build context
+   - Use multi-stage builds (already configured)
+
+5. Build args not working:
+   - Make sure environment variables are set before running build
+   - Check variable names match exactly
+   - Verify with: echo %DOCKER_HUB_USERNAME% (Windows) or echo $DOCKER_HUB_USERNAME (Linux)
+
+CI/CD INTEGRATION
+-----------------
+For GitHub Actions, GitLab CI, or other CI/CD:
+
+1. Set secrets in your CI/CD platform:
+   - DOCKER_HUB_USERNAME
+   - DOCKER_HUB_TOKEN (create at https://hub.docker.com/settings/security)
+
+2. Use the scripts in your pipeline:
+   - docker-build.sh
+   - docker-publish.sh
+
+3. Example GitHub Actions workflow:
+   - Set DOCKER_HUB_USERNAME and DOCKER_HUB_TOKEN as repository secrets
+   - Run: docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_TOKEN
+   - Run: ./docker-build.sh && ./docker-publish.sh
+
+BEST PRACTICES
+--------------
+1. Always tag releases with git tags (v1.0.0, v1.0.1, etc.)
+2. Use specific tags in production (not 'latest')
+3. Test images locally before pushing
+4. Keep Docker Hub credentials secure
+5. Use Docker Hub access tokens instead of passwords
+6. Scan images for vulnerabilities: docker scan yourusername/fleet-frontend:latest
+7. Keep images small by optimizing Dockerfile and .dockerignore
+
+USEFUL COMMANDS
+---------------
+# View local images
+docker images | grep fleet-frontend
+
+# Remove old images
+docker image prune -a
+
+# View image details
+docker inspect yourusername/fleet-frontend:latest
+
+# Check image size
+docker images yourusername/fleet-frontend --format "{{.Repository}}:{{.Tag}} {{.Size}}"
+
+# View image layers
+docker history yourusername/fleet-frontend:latest
+
+# Pull from Docker Hub
+docker pull yourusername/fleet-frontend:latest
+
+# Remove specific image
+docker rmi yourusername/fleet-frontend:latest
+

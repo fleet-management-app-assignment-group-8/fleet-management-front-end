@@ -1,0 +1,28 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: fleet-frontend-authz
+  namespace: fleet-management
+spec:
+  selector:
+    matchLabels:
+      app: fleet-frontend
+  action: ALLOW
+  rules:
+  # Allow all traffic to health check endpoint
+  - to:
+    - operation:
+        paths: ["/api/health"]
+        methods: ["GET"]
+  # Allow authenticated traffic to all other endpoints
+  - from:
+    - source:
+        principals: ["cluster.local/ns/fleet-management/sa/*"]
+    to:
+    - operation:
+        paths: ["/*"]
+  # Allow traffic from Istio ingress gateway
+  - from:
+    - source:
+        namespaces: ["istio-system"]
+

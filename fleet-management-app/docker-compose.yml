@@ -1,0 +1,63 @@
+version: "3.9"
+
+# ===============================
+# Fleet Management Frontend - Production
+# ===============================
+#
+# Production-ready configuration for K8s/Istio deployment
+#
+# For local development, use: docker-compose -f docker-compose.dev.yml up
+#
+# Ports:
+# - Frontend: localhost:3000
+#
+# Environment Variables:
+# - Loaded from .env.production or K8s ConfigMap/Secrets
+#
+# Network:
+# - Connects to fleet-data-network for backend communication
+#
+# Prerequisites:
+# - Backend services must be running
+# - Keycloak must be accessible
+
+services:
+  fleet-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_VEHICLE_SERVICE_URL: ${NEXT_PUBLIC_VEHICLE_SERVICE_URL}
+        NEXT_PUBLIC_MAINTENANCE_SERVICE_URL: ${NEXT_PUBLIC_MAINTENANCE_SERVICE_URL}
+        NEXT_PUBLIC_DRIVER_SERVICE_URL: ${NEXT_PUBLIC_DRIVER_SERVICE_URL}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    image: harinejan/fleet-frontend:latest
+    container_name: fleet-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Runtime secrets (use K8s secrets in production)
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      KEYCLOAK_ID: ${KEYCLOAK_ID}
+      KEYCLOAK_SECRET: ${KEYCLOAK_SECRET}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+    restart: unless-stopped
+    networks:
+      - fleet-data-network
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  fleet-data-network:
+    external: true
+

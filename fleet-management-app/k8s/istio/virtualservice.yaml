@@ -1,0 +1,25 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: fleet-frontend
+  namespace: fleet-management
+spec:
+  hosts:
+  - fleet-frontend
+  - fleet-frontend.fleet-management.svc.cluster.local
+  - "fleet.example.com"  # Replace with your actual domain
+  http:
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: fleet-frontend
+        port:
+          number: 3000
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+

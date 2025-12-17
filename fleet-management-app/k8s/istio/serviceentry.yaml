@@ -1,0 +1,64 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-keycloak
+  namespace: fleet-management
+spec:
+  hosts:
+  - keycloak.external.com  # Replace with your external Keycloak domain
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+  location: MESH_EXTERNAL
+  resolution: DNS
+---
+# If your backend services are in different namespaces, add ServiceEntries for them
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: vehicle-service
+  namespace: fleet-management
+spec:
+  hosts:
+  - vehicle-service.fleet-management.svc.cluster.local
+  ports:
+  - number: 8080
+    name: http
+    protocol: HTTP
+  location: MESH_INTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: maintenance-service
+  namespace: fleet-management
+spec:
+  hosts:
+  - maintenance-service.fleet-management.svc.cluster.local
+  ports:
+  - number: 5001
+    name: http
+    protocol: HTTP
+  location: MESH_INTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: driver-service
+  namespace: fleet-management
+spec:
+  hosts:
+  - driver-service.fleet-management.svc.cluster.local
+  ports:
+  - number: 8080
+    name: http
+    protocol: HTTP
+  location: MESH_INTERNAL
+  resolution: DNS
+

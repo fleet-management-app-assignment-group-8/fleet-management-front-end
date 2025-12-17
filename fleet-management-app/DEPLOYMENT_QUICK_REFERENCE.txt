@@ -1,0 +1,135 @@
+===============================
+FLEET FRONTEND - QUICK REFERENCE
+===============================
+
+IMAGE NAMING CONVENTION
+-----------------------
+All images use: harinejan/fleet-frontend
+
+Tags created automatically:
+  - latest              (always the most recent)
+  - <git-commit>        (e.g., a1b2c3d)
+  - <git-tag>           (e.g., v1.0.0 if tagged)
+  - <branch>            (e.g., feature-auth)
+
+BUILD & DEPLOY WORKFLOW
+-----------------------
+
+1. LOCAL: Build & Push
+   cd fleet-management-app
+   ./docker-build.sh              # Builds image with all tags
+   ./docker-publish.sh            # Pushes to Docker Hub
+   
+2. CLOUD: Redeploy
+   cd fleet-management-app/k8s
+   ./redeploy-service.sh          # Pulls latest, keeps secrets
+
+COMMON COMMANDS
+---------------
+
+# Quick redeploy (most common)
+./redeploy-service.sh
+
+# Deploy specific version
+./redeploy-service.sh --image harinejan/fleet-frontend:a1b2c3d
+
+# Update secrets too
+./redeploy-service.sh --with-secrets
+
+# Test without applying
+./redeploy-service.sh --dry-run
+
+# View logs
+kubectl logs -f deployment/fleet-frontend -n fleet-management
+
+# Check status
+kubectl get pods -n fleet-management
+
+# Scale manually
+kubectl scale deployment fleet-frontend --replicas=3 -n fleet-management
+
+KUBERNETES CONFIG
+-----------------
+Deployment:     k8s/deployment.yaml
+  - Image:      harinejan/fleet-frontend:latest
+  - Pull Policy: Always (pulls latest on every redeploy)
+  - Replicas:   2 (auto-scales 2-10 via HPA)
+
+Service:        k8s/service.yaml
+  - Port:       3000
+  - Type:       ClusterIP
+
+Secrets:        k8s/secret.yaml
+  - Kept by default (not redeployed unless --with-secrets)
+
+ConfigMap:      k8s/configmap.yaml
+  - Always redeployed
+
+DOCKER HUB
+----------
+Username:       harinejan
+Repository:     https://hub.docker.com/r/harinejan/fleet-frontend
+
+Login:          docker login
+                Username: harinejan
+                Password: <your-password-or-token>
+
+Pull (public):  docker pull harinejan/fleet-frontend:latest
+                (no login needed if public)
+
+IMPORTANT NOTES
+---------------
+✓ Secrets are NOT redeployed by default (safer)
+✓ Use --with-secrets only when you need to update secrets
+✓ Image always pulls latest (imagePullPolicy: Always)
+✓ No need to specify --image flag for normal deploys
+✓ Git commit hash is automatically used as image tag
+✓ Both :latest and :<commit> tags are pushed
+
+TROUBLESHOOTING
+---------------
+Image not updating?
+  → Check if new image was pushed: docker pull harinejan/fleet-frontend:latest
+  → Verify imagePullPolicy is "Always" in deployment.yaml
+  → Check pod events: kubectl describe pod <pod-name> -n fleet-management
+
+Secrets missing?
+  → Secrets are kept by default, check if they exist:
+    kubectl get secret fleet-frontend-secrets -n fleet-management
+  → If missing, apply manually: kubectl apply -f k8s/secret.yaml
+
+Pods not starting?
+  → Check logs: kubectl logs <pod-name> -n fleet-management
+  → Check events: kubectl get events -n fleet-management
+  → Verify image exists: docker pull harinejan/fleet-frontend:latest
+
+FIRST TIME SETUP
+----------------
+1. Set Docker Hub username in scripts (already set to 'harinejan')
+2. Login to Docker Hub: docker login
+3. Create secrets in K8s: kubectl apply -f k8s/secret.yaml
+4. Deploy: kubectl apply -k k8s/
+5. Verify: kubectl get pods -n fleet-management
+
+VERSIONED RELEASES
+------------------
+1. Tag in git:
+   git tag -a v1.0.0 -m "Release 1.0.0"
+   git push origin v1.0.0
+
+2. Build & push:
+   ./docker-build.sh
+   ./docker-publish.sh
+   # Creates: harinejan/fleet-frontend:v1.0.0
+
+3. Deploy specific version:
+   ./redeploy-service.sh --image harinejan/fleet-frontend:v1.0.0
+
+CI/CD INTEGRATION
+-----------------
+# Automatic deployment on push
+yes | ./redeploy-service.sh
+
+# Or with specific version
+yes | ./redeploy-service.sh --image harinejan/fleet-frontend:${COMMIT_SHA}
+

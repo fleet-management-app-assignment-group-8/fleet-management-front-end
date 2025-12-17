@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 // Performance optimization: Image optimization configuration
 const nextConfig: NextConfig = {
+  // Docker optimization: Enable standalone output for smaller container size
+  output: 'standalone',
+  
   images: {
     // Enable image optimization
     formats: ['image/webp', 'image/avif'],
