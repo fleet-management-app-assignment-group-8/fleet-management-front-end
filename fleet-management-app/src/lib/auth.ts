@@ -1,21 +1,28 @@
 import { NextAuthOptions } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
 
-// Validate required environment variables
-const requiredEnvVars = {
-  KEYCLOAK_ID: process.env.KEYCLOAK_ID,
-  KEYCLOAK_SECRET: process.env.KEYCLOAK_SECRET,
-  KEYCLOAK_ISSUER: process.env.KEYCLOAK_ISSUER,
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-};
+// Validate required environment variables at runtime only (not during build)
+function validateEnvVars() {
+  // Skip validation during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('⏭️  Skipping auth env validation during build phase');
+    return;
+  }
 
-const missingVars = Object.entries(requiredEnvVars)
-  .filter(([_, value]) => !value)
-  .map(([key]) => key);
+  const requiredEnvVars = {
+    KEYCLOAK_ID: process.env.KEYCLOAK_ID,
+    KEYCLOAK_SECRET: process.env.KEYCLOAK_SECRET,
+    KEYCLOAK_ISSUER: process.env.KEYCLOAK_ISSUER,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+  };
 
-if (missingVars.length > 0) {
-  const errorMessage = `
+  const missingVars = Object.entries(requiredEnvVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingVars.length > 0) {
+    const errorMessage = `
 ╔════════════════════════════════════════════════════════════════╗
 ║  ⚠️  AUTHENTICATION CONFIGURATION ERROR                         ║
 ╚════════════════════════════════════════════════════════════════╝
@@ -27,8 +34,14 @@ To fix this:
 
 See KEYCLOAK_SETUP.txt for detailed setup instructions.
 `;
-  
-  throw new Error(errorMessage);
+    
+    throw new Error(errorMessage);
+  }
+}
+
+// Only validate at runtime, not during build
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
+  validateEnvVars();
 }
 
 // Helper function to refresh the token

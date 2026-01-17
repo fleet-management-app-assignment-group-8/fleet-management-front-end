@@ -161,12 +161,12 @@ class BaseApi {
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('API Error Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorData: errorData,
-        validationErrors: errorData.errors
-      });
+      // console.error('API Error Response:', {
+      //   status: response.status,
+      //   statusText: response.statusText,
+      //   errorData: errorData,
+      //   validationErrors: errorData.errors
+      // });
       
       // Detailed error message including validation errors
       let errorMessage = errorData.message || errorData.error || `HTTP Error: ${response.status}`;

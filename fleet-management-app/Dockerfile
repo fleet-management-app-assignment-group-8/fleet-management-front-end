@@ -25,6 +25,7 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NEXT_PHASE=phase-production-build
 
 # Build arguments for public environment variables (baked into client bundle)
 ARG NEXT_PUBLIC_VEHICLE_SERVICE_URL
@@ -36,6 +37,14 @@ ENV NEXT_PUBLIC_VEHICLE_SERVICE_URL=$NEXT_PUBLIC_VEHICLE_SERVICE_URL
 ENV NEXT_PUBLIC_MAINTENANCE_SERVICE_URL=$NEXT_PUBLIC_MAINTENANCE_SERVICE_URL
 ENV NEXT_PUBLIC_DRIVER_SERVICE_URL=$NEXT_PUBLIC_DRIVER_SERVICE_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Set values for auth variables during build (from .env.local)
+# These are overridden by runtime environment variables in docker-compose
+ENV KEYCLOAK_ID=fleet-management-frontend
+ENV KEYCLOAK_SECRET=SAbDvDUa4Mta8ZGaHq9t8bFYSBAaE7oQ
+ENV KEYCLOAK_ISSUER=http://localhost:8080/realms/fleet-management-app
+ENV NEXTAUTH_URL=http://localhost:3000
+ENV NEXTAUTH_SECRET=12345678901234567890123456789012
 
 # Build the Next.js application
 RUN npm run build
